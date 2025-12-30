@@ -5,6 +5,8 @@
 session_start();
 
 require_once __DIR__ . '/../app/core/database.php';
+require_once __DIR__ . '/../app/core/helpers.php';
+require_once __DIR__ . '/../app/controllers/AuthController.php';
 
 // Initialize Database
 $database = new Database();
@@ -12,6 +14,8 @@ $db = $database->getConnection();
 
 // Basic Routing logic
 $action = isset($_GET['action']) ? $_GET['action'] : 'home';
+$auth_data = null;
+$current_user = getCurrentUser();
 
 ?>
 <!DOCTYPE html>
@@ -30,7 +34,17 @@ $action = isset($_GET['action']) ? $_GET['action'] : 'home';
         <h1>e-bazar</h1>
         <nav>
             <a href="index.php">Accueil</a> | 
-            <a href="?action=login">Connexion</a>
+            <?php if (isLoggedIn()): ?>
+                <span>Bienvenue <?php echo escape($current_user['name']); ?></span> |
+                <a href="?action=dashboard">Mon espace</a> |
+                <?php if ($current_user['role'] === 'admin'): ?>
+                    <a href="?action=admin">Admin</a> |
+                <?php endif; ?>
+                <a href="?action=logout">Déconnexion</a>
+            <?php else: ?>
+                <a href="?action=login">Connexion</a> |
+                <a href="?action=register">S'inscrire</a>
+            <?php endif; ?>
         </nav>
     </header>
 
@@ -61,8 +75,25 @@ $action = isset($_GET['action']) ? $_GET['action'] : 'home';
             <p><i>(Les 4 dernières annonces apparaîtront ici)</i></p>
 
         <?php elseif ($action === 'login'): ?>
-            <h2>Connexion</h2>
-            <p>Formulaire de connexion...</p>
+            <?php
+                $authController = new AuthController($db);
+                $auth_data = $authController->login();
+            ?>
+            <?php include __DIR__ . '/../app/views/login.php'; ?>
+
+        <?php elseif ($action === 'register'): ?>
+            <?php
+                $authController = new AuthController($db);
+                $auth_data = $authController->register();
+            ?>
+            <?php include __DIR__ . '/../app/views/register.php'; ?>
+
+        <?php elseif ($action === 'logout'): ?>
+            <?php
+                $authController = new AuthController($db);
+                $authController->logout();
+            ?>
+
         <?php endif; ?>
     </main>
 
