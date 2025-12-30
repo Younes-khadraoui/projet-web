@@ -31,7 +31,7 @@ CREATE TABLE `ads` (
     `title` VARCHAR(30) NOT NULL,
     `description` TEXT NOT NULL,
     `price` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    `delivery_type` ENUM('postal', 'hand', 'both') NOT NULL,
+    `delivery_type` VARCHAR(100) NOT NULL,
     `category_id` INT UNSIGNED NOT NULL,
     `seller_id` INT UNSIGNED NOT NULL,
     `buyer_id` INT UNSIGNED DEFAULT NULL,

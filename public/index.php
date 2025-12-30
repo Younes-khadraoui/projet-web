@@ -7,6 +7,9 @@ session_start();
 require_once __DIR__ . '/../app/core/database.php';
 require_once __DIR__ . '/../app/core/helpers.php';
 require_once __DIR__ . '/../app/controllers/AuthController.php';
+require_once __DIR__ . '/../app/controllers/CategoryController.php';
+require_once __DIR__ . '/../app/controllers/AdController.php';
+require_once __DIR__ . '/../app/models/Ad.php';
 
 // Initialize Database
 $database = new Database();
@@ -22,57 +25,42 @@ $current_user = getCurrentUser();
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>e-bazar | Petites Annonces</title>
-    <style>
-        body { font-family: sans-serif; line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .category-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
-        .category-item { border: 1px solid #ddd; padding: 15px; border-radius: 5px; text-align: center; }
-    </style>
+    <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
     <header>
-        <h1>e-bazar</h1>
-        <nav>
-            <a href="index.php">Accueil</a> | 
-            <?php if (isLoggedIn()): ?>
-                <span>Bienvenue <?php echo escape($current_user['name']); ?></span> |
-                <a href="?action=dashboard">Mon espace</a> |
-                <?php if ($current_user['role'] === 'admin'): ?>
-                    <a href="?action=admin">Admin</a> |
+        <div class="header-container">
+            <h1>e-bazar</h1>
+            <nav>
+                <a href="index.php">Accueil</a> | 
+                <?php if (isLoggedIn()): ?>
+                    <span>Bienvenue <?php echo escape($current_user['name']); ?></span> |
+                    <a href="?action=dashboard">Mon espace</a> |
+                    <?php if ($current_user['role'] === 'admin'): ?>
+                        <a href="?action=admin">Admin</a> |
+                    <?php endif; ?>
+                    <a href="?action=logout">Déconnexion</a>
+                <?php else: ?>
+                    <a href="?action=login">Connexion</a> |
+                    <a href="?action=register">S'inscrire</a>
                 <?php endif; ?>
-                <a href="?action=logout">Déconnexion</a>
-            <?php else: ?>
-                <a href="?action=login">Connexion</a> |
-                <a href="?action=register">S'inscrire</a>
-            <?php endif; ?>
-        </nav>
+            </nav>
+        </div>
     </header>
 
     <main>
+        <div class="container">
         <?php if ($action === 'home'): ?>
-            <h2>Catégories</h2>
-            <div class="category-list">
-                <?php
-                // Fetch categories and count items
-                $query = "SELECT c.id, c.name, COUNT(a.id) as total 
-                          FROM categories c 
-                          LEFT JOIN ads a ON c.id = a.category_id 
-                          GROUP BY c.id";
-                $stmt = $db->prepare($query);
-                $stmt->execute();
+            <?php
+                $categoryController = new CategoryController($db);
+                $adModel = new Ad($db);
                 
-                while ($row = $stmt->fetch(PDO::FETCH_ASSOC)): ?>
-                    <div class="category-item">
-                        <strong><?php echo htmlspecialchars($row['name']); ?></strong><br>
-                        <?php echo $row['total']; ?> annonce(s)<br>
-                        <a href="?action=list&category=<?php echo $row['id']; ?>">Voir les biens</a>
-                    </div>
-                <?php endwhile; ?>
-            </div>
-            
-            <hr>
-            <h2>Derniers biens mis en vente</h2>
-            <p><i>(Les 4 dernières annonces apparaîtront ici)</i></p>
+                $categories = $categoryController->getAllWithCounts();
+                $recent_ads = $adModel->getRecent(4);
+            ?>
+            <?php include __DIR__ . '/../app/views/home.php'; ?>
 
         <?php elseif ($action === 'login'): ?>
             <?php
@@ -94,7 +82,60 @@ $current_user = getCurrentUser();
                 $authController->logout();
             ?>
 
+        <?php elseif ($action === 'create-ad'): ?>
+            <?php
+                requireLogin();
+                $adController = new AdController($db);
+                $categoryController = new CategoryController($db);
+                $categories = $categoryController->getAll();
+                $adController->create();
+            ?>
+            <?php include __DIR__ . '/../app/views/create-ad.php'; ?>
+
+        <?php elseif ($action === 'category'): ?>
+            <?php
+                $category_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+                $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+                
+                if ($category_id > 0) {
+                    $categoryController = new CategoryController($db);
+                    $adModel = new Ad($db);
+                    
+                    $category = $categoryController->getById($category_id);
+                    if ($category) {
+                        $result = $adModel->getByCategory($category_id, $page, 10);
+                        $ads = $result['ads'];
+                        $total_count = $result['total'];
+                        $total_pages = ceil($total_count / 10);
+                    } else {
+                        $ads = [];
+                        $total_pages = 0;
+                    }
+                } else {
+                    $ads = [];
+                    $category = null;
+                    $total_pages = 0;
+                }
+            ?>
+            <?php if ($category): ?>
+                <?php include __DIR__ . '/../app/views/category.php'; ?>
+            <?php else: ?>
+                <p><em>Catégorie non trouvée.</em></p>
+            <?php endif; ?>
+
+        <?php elseif ($action === 'dashboard'): ?>
+            <?php
+                requireLogin();
+                $adModel = new Ad($db);
+                
+                $for_sale_ads = $adModel->getForSaleByUser($_SESSION['user_id']);
+                $sold_ads = $adModel->getSoldByUser($_SESSION['user_id']);
+                $purchased_ads = $adModel->getPurchasedByUser($_SESSION['user_id']);
+            ?>
+            <?php include __DIR__ . '/../app/views/dashboard.php'; ?>
+
         <?php endif; ?>
+        </div>
     </main>
 
     <footer>

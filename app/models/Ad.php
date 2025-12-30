@@ -14,7 +14,7 @@ class Ad {
      * @param string $title (5-30 chars)
      * @param string $description (5-200 chars)
      * @param float $price
-     * @param string $delivery_type (postal, hand, both)
+     * @param string $delivery_type (comma-separated: retrait,livraison,mondial)
      * @return array ['success' => bool, 'message' => string, 'ad_id' => int|null]
      */
     public function create($seller_id, $category_id, $title, $description, $price, $delivery_type) {
@@ -36,9 +36,9 @@ class Ad {
             return ['success' => false, 'message' => 'Le prix ne peut pas être négatif.'];
         }
 
-        // Validate delivery type
-        if (!in_array($delivery_type, ['postal', 'hand', 'both'])) {
-            return ['success' => false, 'message' => 'Mode de livraison invalide.'];
+        // Validate delivery type is not empty
+        if (empty($delivery_type)) {
+            return ['success' => false, 'message' => 'Au moins un mode de livraison doit être sélectionné.'];
         }
 
         // Validate category exists
@@ -70,6 +70,8 @@ class Ad {
      * @return array ['ads' => [], 'total' => int, 'pages' => int]
      */
     public function getByCategory($category_id, $page = 1, $per_page = 10) {
+        $page = (int)$page;
+        $per_page = (int)$per_page;
         $offset = ($page - 1) * $per_page;
 
         // Get total count
@@ -87,9 +89,9 @@ class Ad {
              LEFT JOIN users u ON a.seller_id = u.id
              WHERE a.category_id = ? AND a.is_sold = 0
              ORDER BY a.created_at DESC
-             LIMIT ? OFFSET ?'
+             LIMIT ' . $per_page . ' OFFSET ' . $offset
         );
-        $stmt->execute([$category_id, $per_page, $offset]);
+        $stmt->execute([$category_id]);
         $ads = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         return [
@@ -123,6 +125,7 @@ class Ad {
      * @return array
      */
     public function getRecent($limit = 4) {
+        $limit = (int)$limit;
         $stmt = $this->db->prepare(
             'SELECT a.*, u.name as seller_name,
                     (SELECT filename FROM photos WHERE ad_id = a.id AND is_primary = 1 LIMIT 1) as thumbnail
@@ -130,9 +133,9 @@ class Ad {
              LEFT JOIN users u ON a.seller_id = u.id
              WHERE a.is_sold = 0
              ORDER BY a.created_at DESC
-             LIMIT ?'
+             LIMIT ' . $limit
         );
-        $stmt->execute([$limit]);
+        $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -143,7 +146,8 @@ class Ad {
      */
     public function getSoldByUser($seller_id) {
         $stmt = $this->db->prepare(
-            'SELECT a.*, u.name as buyer_name
+            'SELECT a.*, u.name as buyer_name,
+                    (SELECT filename FROM photos WHERE ad_id = a.id AND is_primary = 1 LIMIT 1) as thumbnail
              FROM ads a
              LEFT JOIN users u ON a.buyer_id = u.id
              WHERE a.seller_id = ? AND a.is_sold = 1
@@ -160,7 +164,8 @@ class Ad {
      */
     public function getPurchasedByUser($buyer_id) {
         $stmt = $this->db->prepare(
-            'SELECT a.*, u.name as seller_name
+            'SELECT a.*, u.name as seller_name,
+                    (SELECT filename FROM photos WHERE ad_id = a.id AND is_primary = 1 LIMIT 1) as thumbnail
              FROM ads a
              LEFT JOIN users u ON a.seller_id = u.id
              WHERE a.buyer_id = ?
@@ -177,7 +182,8 @@ class Ad {
      */
     public function getForSaleByUser($seller_id) {
         $stmt = $this->db->prepare(
-            'SELECT a.*, c.name as category_name
+            'SELECT a.*, c.name as category_name,
+                    (SELECT filename FROM photos WHERE ad_id = a.id AND is_primary = 1 LIMIT 1) as thumbnail
              FROM ads a
              LEFT JOIN categories c ON a.category_id = c.id
              WHERE a.seller_id = ? AND a.is_sold = 0
