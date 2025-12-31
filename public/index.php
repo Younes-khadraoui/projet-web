@@ -4,12 +4,16 @@
 // Session start 
 session_start();
 
+require_once __DIR__ . '/../app/core/config.php';
 require_once __DIR__ . '/../app/core/database.php';
 require_once __DIR__ . '/../app/core/helpers.php';
 require_once __DIR__ . '/../app/controllers/AuthController.php';
 require_once __DIR__ . '/../app/controllers/CategoryController.php';
 require_once __DIR__ . '/../app/controllers/AdController.php';
+require_once __DIR__ . '/../app/controllers/AdminController.php';
 require_once __DIR__ . '/../app/models/Ad.php';
+require_once __DIR__ . '/../app/models/Transaction.php';
+require_once __DIR__ . '/../app/models/User.php';
 
 // Initialize Database
 $database = new Database();
@@ -20,6 +24,15 @@ $action = isset($_GET['action']) ? $_GET['action'] : 'home';
 $auth_data = null;
 $current_user = getCurrentUser();
 
+// Determine base URL for assets
+$base_url = Config::get('BASE_URL', '');
+if (empty($base_url)) {
+    // Auto-detect if not set in .env
+    $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'];
+    $base_url = $protocol . '://' . $host;
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -27,7 +40,7 @@ $current_user = getCurrentUser();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>e-bazar | Petites Annonces</title>
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="<?php echo $base_url; ?>/assets/css/style.css">
 </head>
 <body>
     <header>
@@ -86,9 +99,9 @@ $current_user = getCurrentUser();
             <?php
                 requireLogin();
                 $adController = new AdController($db);
-                $categoryController = new CategoryController($db);
-                $categories = $categoryController->getAll();
-                $adController->create();
+                $result = $adController->create();
+                $categories = $result['categories'];
+                $errors = $result['errors'];
             ?>
             <?php include __DIR__ . '/../app/views/create-ad.php'; ?>
 
@@ -123,6 +136,128 @@ $current_user = getCurrentUser();
                 <p><em>Catégorie non trouvée.</em></p>
             <?php endif; ?>
 
+        <?php elseif ($action === 'ad'): ?>
+            <?php
+                $ad_id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+                
+                if ($ad_id > 0) {
+                    $adModel = new Ad($db);
+                    $ad = $adModel->getById($ad_id);
+                    
+                    if ($ad) {
+                        // Get photos for this ad
+                        $stmt = $db->prepare('SELECT * FROM photos WHERE ad_id = ? ORDER BY is_primary DESC, id ASC');
+                        $stmt->execute([$ad_id]);
+                        $photos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                    } else {
+                        $ad = null;
+                        $photos = [];
+                    }
+                } else {
+                    $ad = null;
+                    $photos = [];
+                }
+            ?>
+            <?php include __DIR__ . '/../app/views/ad.php'; ?>
+
+        <?php elseif ($action === 'buy'): ?>
+            <?php
+                requireLogin();
+                $ad_id = isset($_POST['ad_id']) ? (int)$_POST['ad_id'] : 0;
+                $delivery_type = isset($_POST['delivery_type']) ? trim($_POST['delivery_type']) : '';
+                
+                if ($ad_id > 0 && !empty($delivery_type)) {
+                    $adModel = new Ad($db);
+                    $ad = $adModel->getById($ad_id);
+                    
+                    if ($ad && !$ad['is_sold']) {
+                        // Process payment
+                        $transactionModel = new Transaction($db);
+                        $result = $transactionModel->processPurchase(
+                            $ad_id,
+                            $_SESSION['user_id'],
+                            $ad['seller_id'],
+                            $ad['price']
+                        );
+                        
+                        if ($result['success']) {
+                            // Mark ad as sold
+                            $adModel->markAsSold($ad_id, $_SESSION['user_id']);
+                            
+                            // Update session balance
+                            $userModel = new User($db);
+                            $updatedUser = $userModel->getById($_SESSION['user_id']);
+                            if ($updatedUser) {
+                                $_SESSION['user_balance'] = $updatedUser['balance'] ?? 0;
+                            }
+                            
+                            $_SESSION['purchase_message'] = 'Achat réussi!';
+                            header('Location: /?action=dashboard');
+                            exit;
+                        } else {
+                            // Payment failed
+                            $_SESSION['purchase_error'] = $result['message'];
+                            header('Location: /?action=ad&id=' . $ad_id);
+                            exit;
+                        }
+                    }
+                }
+                
+                // If we get here, something went wrong
+                header('Location: /?action=ad&id=' . $ad_id);
+                exit;
+            ?>
+
+        <?php elseif ($action === 'delete-ad'): ?>
+            <?php
+                requireLogin();
+                $ad_id = isset($_POST['ad_id']) ? (int)$_POST['ad_id'] : 0;
+                
+                if ($ad_id > 0) {
+                    $adModel = new Ad($db);
+                    
+                    // Check ownership
+                    if ($adModel->isOwner($ad_id, $_SESSION['user_id'])) {
+                        $ad = $adModel->getById($ad_id);
+                        
+                        // Allow deletion only if not sold or if owner
+                        if ($ad && !$ad['is_sold']) {
+                            $adModel->delete($ad_id);
+                            header('Location: /?action=dashboard');
+                            exit;
+                        }
+                    }
+                }
+                
+                // If we get here, permission denied or ad not found
+                header('Location: /?action=dashboard');
+                exit;
+            ?>
+
+        <?php elseif ($action === 'confirm-receipt'): ?>
+            <?php
+                requireLogin();
+                $ad_id = isset($_POST['ad_id']) ? (int)$_POST['ad_id'] : 0;
+                
+                if ($ad_id > 0) {
+                    $adModel = new Ad($db);
+                    $ad = $adModel->getById($ad_id);
+                    
+                    // Check if user is the buyer
+                    if ($ad && $ad['buyer_id'] == $_SESSION['user_id']) {
+                        // Mark as received but don't delete
+                        $adModel->markAsReceived($ad_id);
+                        
+                        header('Location: /?action=dashboard');
+                        exit;
+                    }
+                }
+                
+                // If we get here, permission denied
+                header('Location: /?action=dashboard');
+                exit;
+            ?>
+
         <?php elseif ($action === 'dashboard'): ?>
             <?php
                 requireLogin();
@@ -133,6 +268,131 @@ $current_user = getCurrentUser();
                 $purchased_ads = $adModel->getPurchasedByUser($_SESSION['user_id']);
             ?>
             <?php include __DIR__ . '/../app/views/dashboard.php'; ?>
+
+        <?php elseif ($action === 'admin'): ?>
+            <?php
+                requireAdmin();
+                $adminController = new AdminController($db);
+                
+                $ads = $adminController->getAllAds();
+                $users = $adminController->getAllUsers();
+                $categories = $adminController->getAllCategories();
+            ?>
+            <?php include __DIR__ . '/../app/views/admin.php'; ?>
+
+        <?php elseif ($action === 'admin-delete-ad'): ?>
+            <?php
+                requireAdmin();
+                $ad_id = isset($_POST['ad_id']) ? (int)$_POST['ad_id'] : 0;
+                
+                if ($ad_id > 0) {
+                    $adminController = new AdminController($db);
+                    $result = $adminController->deleteAd($ad_id);
+                    
+                    // Redirect with message
+                    $_SESSION['admin_message'] = $result['message'];
+                    $_SESSION['admin_message_type'] = $result['success'] ? 'success' : 'error';
+                }
+                
+                header('Location: /?action=admin');
+                exit;
+            ?>
+
+        <?php elseif ($action === 'admin-delete-user'): ?>
+            <?php
+                requireAdmin();
+                $user_id = isset($_POST['user_id']) ? (int)$_POST['user_id'] : 0;
+                
+                if ($user_id > 0) {
+                    $adminController = new AdminController($db);
+                    $result = $adminController->deleteUser($user_id);
+                    
+                    // Redirect with message
+                    $_SESSION['admin_message'] = $result['message'];
+                    $_SESSION['admin_message_type'] = $result['success'] ? 'success' : 'error';
+                }
+                
+                header('Location: /?action=admin#users');
+                exit;
+            ?>
+
+        <?php elseif ($action === 'admin-add-category'): ?>
+            <?php
+                requireAdmin();
+                $name = isset($_POST['name']) ? trim($_POST['name']) : '';
+                
+                if (!empty($name)) {
+                    $adminController = new AdminController($db);
+                    $result = $adminController->addCategory($name);
+                    
+                    $_SESSION['admin_message'] = $result['message'];
+                    $_SESSION['admin_message_type'] = $result['success'] ? 'success' : 'error';
+                }
+                
+                header('Location: /?action=admin#categories');
+                exit;
+            ?>
+
+        <?php elseif ($action === 'admin-rename-category'): ?>
+            <?php
+                requireAdmin();
+                $category_id = isset($_POST['category_id']) ? (int)$_POST['category_id'] : 0;
+                $name = isset($_POST['name']) ? trim($_POST['name']) : '';
+                
+                if ($category_id > 0 && !empty($name)) {
+                    $adminController = new AdminController($db);
+                    $result = $adminController->renameCategory($category_id, $name);
+                    
+                    $_SESSION['admin_message'] = $result['message'];
+                    $_SESSION['admin_message_type'] = $result['success'] ? 'success' : 'error';
+                }
+                
+                header('Location: /?action=admin#categories');
+                exit;
+            ?>
+
+        <?php elseif ($action === 'admin-delete-category'): ?>
+            <?php
+                requireAdmin();
+                $category_id = isset($_POST['category_id']) ? (int)$_POST['category_id'] : 0;
+                
+                if ($category_id > 0) {
+                    $adminController = new AdminController($db);
+                    $result = $adminController->deleteCategory($category_id);
+                    
+                    $_SESSION['admin_message'] = $result['message'];
+                    $_SESSION['admin_message_type'] = $result['success'] ? 'success' : 'error';
+                }
+                
+                header('Location: /?action=admin#categories');
+                exit;
+            ?>
+
+        <?php elseif ($action === 'top-up-balance'): ?>
+            <?php
+                requireLogin();
+                $amount = isset($_POST['amount']) ? (float)$_POST['amount'] : 0;
+                
+                if ($amount > 0) {
+                    $transactionModel = new Transaction($db);
+                    $result = $transactionModel->topUpBalance($_SESSION['user_id'], $amount);
+                    
+                    $_SESSION['topup_message'] = $result['message'];
+                    $_SESSION['topup_success'] = $result['success'];
+                    
+                    if ($result['success']) {
+                        // Update session balance
+                        $userModel = new User($db);
+                        $updatedUser = $userModel->getById($_SESSION['user_id']);
+                        if ($updatedUser) {
+                            $_SESSION['user_balance'] = $updatedUser['balance'] ?? 0;
+                        }
+                    }
+                }
+                
+                header('Location: /?action=dashboard');
+                exit;
+            ?>
 
         <?php endif; ?>
         </div>

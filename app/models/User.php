@@ -64,7 +64,7 @@ class User {
             return ['success' => false, 'message' => 'Email et mot de passe requis.'];
         }
 
-        $stmt = $this->db->prepare('SELECT id, name, email, password, role FROM users WHERE email = ?');
+        $stmt = $this->db->prepare('SELECT id, name, email, password, role, balance FROM users WHERE email = ?');
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 

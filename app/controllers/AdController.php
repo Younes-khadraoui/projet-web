@@ -8,10 +8,9 @@ class AdController {
     }
 
     public function create() {
-        requireLogin();
-        
         $categoryController = new CategoryController($this->db);
-        $categories = $categoryController->getAllWithCounts();
+        $categories = $categoryController->getAll();
+        $errors = [];
         
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $title = $_POST['title'] ?? '';
@@ -21,8 +20,6 @@ class AdController {
             $delivery_type = isset($_POST['delivery_type']) ? implode(',', array_filter($_POST['delivery_type'])) : '';
             
             // Validate input
-            $errors = [];
-            
             if (strlen($title) < 5 || strlen($title) > 30) {
                 $errors[] = "Le titre doit contenir entre 5 et 30 caractères.";
             }
@@ -105,5 +102,10 @@ class AdController {
                 }
             }
         }
+        
+        return [
+            'categories' => $categories,
+            'errors' => $errors
+        ];
     }
 }

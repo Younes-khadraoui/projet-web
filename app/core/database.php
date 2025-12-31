@@ -1,12 +1,21 @@
 <?php
 // app/core/database.php
 
+require_once __DIR__ . '/config.php';
+
 class Database {
-    private $host = "localhost";
-    private $db_name = "projet";
-    private $username = "projet";
-    private $password = "tejorp";
+    private $host;
+    private $db_name;
+    private $username;
+    private $password;
     public $conn;
+
+    public function __construct() {
+        $this->host = Config::get('DB_HOST', 'localhost');
+        $this->db_name = Config::get('DB_NAME', 'projet');
+        $this->username = Config::get('DB_USER', 'projet');
+        $this->password = Config::get('DB_PASSWORD', 'tejorp');
+    }
 
     public function getConnection() {
         $this->conn = null;

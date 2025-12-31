@@ -12,6 +12,7 @@ CREATE TABLE `users` (
     `email` VARCHAR(150) NOT NULL,
     `password` VARCHAR(255) NOT NULL,
     `role` ENUM('admin', 'user') DEFAULT 'user',
+    `balance` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     UNIQUE KEY `uniq_email` (`email`)
@@ -51,6 +52,23 @@ CREATE TABLE `photos` (
     `filename` VARCHAR(255) NOT NULL,
     `is_primary` TINYINT(1) DEFAULT 0,
     PRIMARY KEY (`id`),
+    INDEX (`ad_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 5. Transactions
+CREATE TABLE `transactions` (
+    `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `ad_id` INT UNSIGNED DEFAULT NULL,
+    `user_id` INT UNSIGNED DEFAULT NULL,
+    `buyer_id` INT UNSIGNED DEFAULT NULL,
+    `seller_id` INT UNSIGNED DEFAULT NULL,
+    `amount` DECIMAL(10, 2) NOT NULL,
+    `type` ENUM('purchase', 'topup') NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    INDEX (`user_id`),
+    INDEX (`buyer_id`),
+    INDEX (`seller_id`),
     INDEX (`ad_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

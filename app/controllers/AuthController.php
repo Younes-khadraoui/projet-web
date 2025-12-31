@@ -75,6 +75,7 @@ class AuthController {
                     $_SESSION['user_name'] = $result['user']['name'];
                     $_SESSION['user_email'] = $result['user']['email'];
                     $_SESSION['user_role'] = $result['user']['role'];
+                    $_SESSION['user_balance'] = $result['user']['balance'];
                     
                     // Redirect to previous page or home
                     $redirect = $_GET['redirect'] ?? '?action=home';

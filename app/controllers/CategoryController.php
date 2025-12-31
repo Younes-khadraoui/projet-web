@@ -24,6 +24,16 @@ class CategoryController {
     }
 
     /**
+     * Get all categories (id and name)
+     * @return array
+     */
+    public function getAll() {
+        $stmt = $this->db->prepare('SELECT id, name FROM categories ORDER BY name ASC');
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
      * Get category by ID
      * @param int $id
      * @return array|null

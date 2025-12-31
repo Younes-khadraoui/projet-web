@@ -12,14 +12,18 @@
             <div class="category-card">
                 <h3><?php echo escape($category['name']); ?></h3>
                 <p class="ad-count"><?php echo $category['ad_count']; ?> annonce<?php echo $category['ad_count'] !== 1 ? 's' : ''; ?></p>
-                <a href="?action=category&id=<?php echo $category['id']; ?>" class="btn btn-secondary">
-                    Voir les biens
-                </a>
+                <?php if ($category['ad_count'] > 0): ?>
+                    <a href="?action=category&id=<?php echo $category['id']; ?>" class="btn btn-secondary">
+                        Voir les biens
+                    </a>
+                <?php else: ?>
+                    <button class="btn btn-secondary" disabled>
+                        Voir les biens
+                    </button>
+                <?php endif; ?>
             </div>
         <?php endforeach; ?>
     </div>
-
-    <hr>
 
     <h2>Derniers biens mis en vente</h2>
     <div class="recent-ads">

@@ -60,7 +60,8 @@ function getCurrentUser() {
         'id' => $_SESSION['user_id'],
         'name' => $_SESSION['user_name'],
         'email' => $_SESSION['user_email'],
-        'role' => $_SESSION['user_role'] ?? 'user'
+        'role' => $_SESSION['user_role'] ?? 'user',
+        'balance' => $_SESSION['user_balance'] ?? 0
     ];
 }
 
@@ -129,4 +130,13 @@ function validateImageUpload($file, $max_size = 204800) {
 function generateUniqueFilename($original_name) {
     $ext = pathinfo($original_name, PATHINFO_EXTENSION);
     return bin2hex(random_bytes(16)) . '.' . strtolower($ext);
+}
+/**
+ * Format date for display
+ * @param string $date
+ * @return string
+ */
+function formatDate($date) {
+    $timestamp = strtotime($date);
+    return date('d/m/Y H:i', $timestamp);
 }

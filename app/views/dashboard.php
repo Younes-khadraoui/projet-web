@@ -1,5 +1,25 @@
 <div class="dashboard">
-    <h2>Tableau de Bord</h2>
+    <div class="dashboard-header">
+        <h2>Tableau de Bord</h2>
+        <div class="balance-box" onclick="openTopUpModal()" style="cursor: pointer;">
+            <span>Solde:</span>
+            <span class="balance-amount"><?= formatPrice($current_user['balance']) ?></span>
+        </div>
+    </div>
+
+    <?php if (isset($_SESSION['topup_message'])): ?>
+        <div class="alert alert-<?= $_SESSION['topup_success'] ? 'success' : 'danger' ?>">
+            <?= escape($_SESSION['topup_message']) ?>
+        </div>
+        <?php unset($_SESSION['topup_message'], $_SESSION['topup_success']); ?>
+    <?php endif; ?>
+
+    <?php if (isset($_SESSION['purchase_message'])): ?>
+        <div class="alert alert-success">
+            <?= escape($_SESSION['purchase_message']) ?>
+        </div>
+        <?php unset($_SESSION['purchase_message']); ?>
+    <?php endif; ?>
     
     <?php if (isLoggedIn()): ?>
         <div class="tabs">
@@ -85,15 +105,34 @@
                                 <p class="price"><?php echo formatPrice($ad['price']); ?></p>
                                 <p class="seller">Vendeur: <?php echo escape($ad['seller_name']); ?></p>
                                 <?php if (!$ad['is_received']): ?>
-                                    <button class="btn btn-success btn-sm" onclick="confirmReception(<?php echo $ad['id']; ?>)">Confirmer réception</button>
+                                    <button class="btn btn-success btn-sm" onclick="openReceiptModal(<?php echo $ad['id']; ?>)">Confirmer réception</button>
                                 <?php else: ?>
-                                    <p class="status">✓ Confirmé</p>
+                                    <p class="status-received">✓ Confirmé</p>
                                 <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
+        </div>
+
+        <!-- Receipt Confirmation Modal -->
+        <div id="receiptModal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close" onclick="closeReceiptModal()">&times;</span>
+                <h2>Confirmer la réception</h2>
+                
+                <p>Êtes-vous sûr d'avoir reçu cet article ? Cette action est irréversible.</p>
+                
+                <form method="POST" action="?action=confirm-receipt">
+                    <input type="hidden" name="ad_id" id="receiptAdIdInput" value="">
+                    
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-success">Confirmer</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeReceiptModal()">Annuler</button>
+                    </div>
+                </form>
+            </div>
         </div>
     <?php else: ?>
         <p>Veuillez vous connecter pour accéder à votre tableau de bord.</p>
@@ -120,9 +159,51 @@ function switchTab(tabName) {
     event.target.classList.add('active');
 }
 
-function confirmReception(adId) {
-    if (confirm('Confirmer la réception de cette annonce?')) {
-        window.location.href = '/?action=confirm-reception&id=' + adId;
+function openReceiptModal(adId) {
+    document.getElementById('receiptAdIdInput').value = adId;
+    document.getElementById('receiptModal').classList.add('show');
+}
+
+function closeReceiptModal() {
+    document.getElementById('receiptModal').classList.remove('show');
+}
+
+function openTopUpModal() {
+    document.getElementById('topUpModal').classList.add('show');
+}
+
+function closeTopUpModal() {
+    document.getElementById('topUpModal').classList.remove('show');
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const receiptModal = document.getElementById('receiptModal');
+    const topUpModal = document.getElementById('topUpModal');
+    if (event.target === receiptModal) {
+        receiptModal.classList.remove('show');
+    }
+    if (event.target === topUpModal) {
+        topUpModal.classList.remove('show');
     }
 }
 </script>
+
+<!-- Top Up Balance Modal -->
+<div id="topUpModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeTopUpModal()">&times;</span>
+        <h2>Créditer votre solde</h2>
+        <form method="POST" action="?action=top-up-balance">
+            <div class="form-group">
+                <label for="topUpAmount">Montant à créditer (€)</label>
+                <input type="number" id="topUpAmount" name="amount" step="0.01" min="0.01" max="10000" placeholder="Ex: 50.00" required>
+                <small>Montant minimum: 0.01 € | Maximum: 10 000 €</small>
+            </div>
+            <div class="form-group" style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeTopUpModal()">Annuler</button>
+                <button type="submit" class="btn btn-success">Créditer</button>
+            </div>
+        </form>
+    </div>
+</div>
