@@ -34,11 +34,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 1) {
 
     if (!$error_message) {
         try {
-            // 2. Create database if it doesn't exist
+            // Create database if it doesn't exist
             $pdo->exec("CREATE DATABASE IF NOT EXISTS `$db_name` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
             $pdo->exec("USE `$db_name`");
 
-            // 3. Read and execute schema.sql
+            // Read and execute schema.sql
             $schema_sql = file_get_contents(__DIR__ . '/schema.sql');
             if ($schema_sql === false) {
                 throw new Exception("Impossible de lire le fichier schema.sql.");
@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 1) {
 
             $pdo->exec($schema_sql);
 
-            // 4. Optionally, execute data.sql for seeding
+            // Optionally, execute data.sql for seeding
             if ($seed_data) {
                 $data_sql = file_get_contents(__DIR__ . '/data.sql');
                 if ($data_sql === false) {
@@ -55,18 +55,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 1) {
                 $pdo->exec($data_sql);
             }
 
-            // 5. Create .env file
+            // Create .env file
             $env_content = "DB_HOST=$db_host\n";
             $env_content .= "DB_NAME=$db_name\n";
             $env_content .= "DB_USER=$db_user\n";
             $env_content .= "DB_PASS=$db_pass\n";
-            $env_content .= "BASE_URL=\n"; // Leave empty for auto-detection
+            $env_content .= "BASE_URL=\n"; 
 
             if (file_put_contents($env_path, $env_content) === false) {
                 throw new Exception("Impossible de créer le fichier .env. Veuillez vérifier les permissions.");
             }
 
-            // Redirect to success page
             header("Location: index.php?step=2");
             exit;
 

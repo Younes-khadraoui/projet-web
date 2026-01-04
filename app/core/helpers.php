@@ -1,9 +1,4 @@
 <?php
-
-/**
- * Helper functions for e-bazar application
- */
-
 /**
  * Require user to be logged in
  * Redirects to login page if not authenticated

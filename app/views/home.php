@@ -17,9 +17,9 @@
                         Voir les biens
                     </a>
                 <?php else: ?>
-                    <button class="btn btn-secondary" disabled>
+                    <a href="#" class="btn btn-secondary disabled" aria-disabled="true">
                         Voir les biens
-                    </button>
+                    </a>
                 <?php endif; ?>
             </div>
         <?php endforeach; ?>

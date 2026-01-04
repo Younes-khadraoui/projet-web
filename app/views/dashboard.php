@@ -101,7 +101,7 @@
                                 <?php if (!$ad['is_received']): ?>
                                     <button class="btn btn-success btn-sm" onclick="openReceiptModal(<?php echo $ad['id']; ?>)">Confirmer réception</button>
                                 <?php else: ?>
-                                    <p class="status-received">✓ Confirmé</p>
+                                    <button class="btn btn-secondary btn-sm" disabled>✓ Reçu</button>
                                 <?php endif; ?>
                             </div>
                         </div>

@@ -1,11 +1,15 @@
 <?php
+// public/index.php
+
 // Handle installation process if .env file is missing
-if (!file_exists(__DIR__ . '/.env')) {
+if (!file_exists(__DIR__ . '/../.env')) {
+    // If the request is for the installer, load it and exit
     if (strpos($_SERVER['REQUEST_URI'], '/install/index.php') !== false) {
-        require __DIR__ . '/install/index.php';
+        require __DIR__ . '/../install/index.php';
         exit;
     } else {
-        header('Location: install/index.php');
+        // Otherwise, redirect to the installer
+        header('Location: ../install/index.php');
         exit;
     }
 }
@@ -13,32 +17,33 @@ if (!file_exists(__DIR__ . '/.env')) {
 // Session start 
 session_start();
 
-require_once __DIR__ . '/app/core/config.php';
-require_once __DIR__ . '/app/core/database.php';
-require_once __DIR__ . '/app/core/helpers.php';
-require_once __DIR__ . '/app/controllers/AuthController.php';
-require_once __DIR__ . '/app/controllers/CategoryController.php';
-require_once __DIR__ . '/app/controllers/AdController.php';
-require_once __DIR__ . '/app/controllers/AdminController.php';
-require_once __DIR__ . '/app/models/Ad.php';
-require_once __DIR__ . '/app/models/Transaction.php';
-require_once __DIR__ . '/app/models/User.php';
+require_once __DIR__ . '/../app/core/config.php';
+require_once __DIR__ . '/../app/core/database.php';
+require_once __DIR__ . '/../app/core/helpers.php';
+require_once __DIR__ . '/../app/controllers/AuthController.php';
+require_once __DIR__ . '/../app/controllers/CategoryController.php';
+require_once __DIR__ . '/../app/controllers/AdController.php';
+require_once __DIR__ . '/../app/controllers/AdminController.php';
+require_once __DIR__ . '/../app/models/Ad.php';
+require_once __DIR__ . '/../app/models/Transaction.php';
+require_once __DIR__ . '/../app/models/User.php';
 
-// Init Database
+// Initialize Database
 $database = new Database();
 $db = $database->getConnection();
 
+// Basic Routing logic
 $action = isset($_GET['action']) ? $_GET['action'] : 'home';
 $auth_data = null;
 $current_user = getCurrentUser();
 
+// Determine base URL for assets
 $base_url = Config::get('BASE_URL', '');
 if (empty($base_url)) {
+    // Auto-detect if not set in .env
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
-    $script_name = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
-    $base_path = ($script_name == '/') ? '' : $script_name;
-    $base_url = $protocol . '://' . $host . $base_path;
+    $base_url = $protocol . '://' . $host;
 }
 
 ?>
@@ -48,33 +53,30 @@ if (empty($base_url)) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>E-Bazar</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <!-- Cache-busting query string added -->
-    <link rel="stylesheet" href="<?php echo $base_url; ?>/public/assets/css/style.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="<?php echo $base_url; ?>/assets/css/style.css">
 </head>
 <body>
     <header>
         <div class="header-container">
-            <h1><a href="<?= $base_url ?>/" style="text-decoration: none; color: var(--primary-color);">e-bazar</a></h1>
+            <h1><a href="/" style="text-decoration: none; color: var(--primary);">e-bazar</a></h1>
             <nav>
-                <form action="<?= $base_url ?>/" method="GET" class="search-bar">
+                <a href="/">Accueil</a>
+                <form action="/" method="GET" class="search-bar">
                     <input type="hidden" name="action" value="search">
                     <input type="text" name="q" placeholder="Rechercher des annonces..." value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
                     <button type="submit"><i class="fas fa-search"></i></button>
                 </form>
                 <?php if (isLoggedIn()): ?>
-                    <span class="nav-user">Bienvenue, <?php echo escape($current_user['name']); ?></span>
-                    <?php if ($current_user['role'] !== 'admin'): ?>
-                        <span class="nav-balance" onclick="openModal('topUpModal')" style="cursor: pointer;">Solde: <strong><?php echo formatPrice($current_user['balance']); ?></strong></span>
-                    <?php endif; ?>
-                    <a href="<?= $base_url ?>/?action=dashboard">Mon espace</a>
+                    <span class="nav-user">| Bienvenue, <?php echo escape($current_user['name']); ?></span>
+                    <span class="nav-balance" onclick="openModal('topUpModal')" style="cursor: pointer;">| Solde: <strong><?php echo formatPrice($current_user['balance']); ?></strong></span>
+                    <a href="?action=dashboard">Mon espace</a>
                     <?php if ($current_user['role'] === 'admin'): ?>
-                        <a href="<?= $base_url ?>/?action=admin">Admin</a>
+                        <a href="?action=admin">Admin</a>
                     <?php endif; ?>
-                    <a href="<?= $base_url ?>/?action=logout">Déconnexion</a>
+                    <a href="?action=logout">Déconnexion</a>
                 <?php else: ?>
-                    <a href="<?= $base_url ?>/?action=login">Connexion</a>
-                    <a href="<?= $base_url ?>/?action=register">S'inscrire</a>
+                    <a href="?action=login">| Connexion</a>
+                    <a href="?action=register">| S'inscrire</a>
                 <?php endif; ?>
             </nav>
         </div>
@@ -90,21 +92,21 @@ if (empty($base_url)) {
                 $categories = $categoryController->getAllWithCounts();
                 $recent_ads = $adModel->getRecent(4);
             ?>
-            <?php include __DIR__ . '/app/views/home.php'; ?>
+            <?php include __DIR__ . '/../app/views/home.php'; ?>
 
         <?php elseif ($action === 'login'): ?>
             <?php
                 $authController = new AuthController($db);
                 $auth_data = $authController->login();
             ?>
-            <?php include __DIR__ . '/app/views/login.php'; ?>
+            <?php include __DIR__ . '/../app/views/login.php'; ?>
 
         <?php elseif ($action === 'register'): ?>
             <?php
                 $authController = new AuthController($db);
                 $auth_data = $authController->register();
             ?>
-            <?php include __DIR__ . '/app/views/register.php'; ?>
+            <?php include __DIR__ . '/../app/views/register.php'; ?>
 
         <?php elseif ($action === 'logout'): ?>
             <?php
@@ -120,7 +122,7 @@ if (empty($base_url)) {
                 $categories = $result['categories'];
                 $errors = $result['errors'];
             ?>
-            <?php include __DIR__ . '/app/views/create-ad.php'; ?>
+            <?php include __DIR__ . '/../app/views/create-ad.php'; ?>
 
         <?php elseif ($action === 'category'): ?>
             <?php
@@ -148,7 +150,7 @@ if (empty($base_url)) {
                 }
             ?>
             <?php if ($category): ?>
-                <?php include __DIR__ . '/app/views/category.php'; ?>
+                <?php include __DIR__ . '/../app/views/category.php'; ?>
             <?php else: ?>
                 <p><em>Catégorie non trouvée.</em></p>
             <?php endif; ?>
@@ -175,7 +177,7 @@ if (empty($base_url)) {
                     $photos = [];
                 }
             ?>
-            <?php include __DIR__ . '/app/views/ad.php'; ?>
+            <?php include __DIR__ . '/../app/views/ad.php'; ?>
 
         <?php elseif ($action === 'buy'): ?>
             <?php
@@ -245,14 +247,14 @@ if (empty($base_url)) {
                         // Allow deletion only if not sold or if owner
                         if ($ad && !$ad['is_sold']) {
                             $adModel->delete($ad_id);
-                            header('Location: ?action=dashboard');
+                            header('Location: /?action=dashboard');
                             exit;
                         }
                     }
                 }
                 
                 // If we get here, permission denied or ad not found
-                header('Location: ?action=dashboard');
+                header('Location: /?action=dashboard');
                 exit;
             ?>
 
@@ -270,13 +272,13 @@ if (empty($base_url)) {
                         // Mark as received but don't delete
                         $adModel->markAsReceived($ad_id);
                         
-                        header('Location: ?action=dashboard');
+                        header('Location: /?action=dashboard');
                         exit;
                     }
                 }
                 
                 // If we get here, permission denied
-                header('Location: ?action=dashboard');
+                header('Location: /?action=dashboard');
                 exit;
             ?>
 
@@ -289,8 +291,8 @@ if (empty($base_url)) {
                 $sold_ads = $adModel->getSoldByUser($_SESSION['user_id']);
                 $purchased_ads = $adModel->getPurchasedByUser($_SESSION['user_id']);
             ?>
-            <?php include __DIR__ . '/app/views/dashboard.php'; ?>
-            
+            <?php include __DIR__ . '/../app/views/dashboard.php'; ?>
+
         <?php elseif ($action === 'admin'): ?>
             <?php
                 requireAdmin();
@@ -300,7 +302,7 @@ if (empty($base_url)) {
                 $users = $adminController->getAllUsers();
                 $categories = $adminController->getAllCategories();
             ?>
-            <?php include __DIR__ . '/app/views/admin.php'; ?>
+            <?php include __DIR__ . '/../app/views/admin.php'; ?>
 
         <?php elseif ($action === 'admin-delete-ad'): ?>
             <?php
@@ -316,7 +318,7 @@ if (empty($base_url)) {
                     $_SESSION['admin_message_type'] = $result['success'] ? 'success' : 'error';
                 }
                 
-                header('Location: /?action=admin#ads');
+                header('Location: /?action=admin');
                 exit;
             ?>
 
@@ -372,7 +374,7 @@ if (empty($base_url)) {
                 header('Location: /?action=admin#categories');
                 exit;
             ?>
-            
+
         <?php elseif ($action === 'admin-delete-category'): ?>
             <?php
                 requireAdmin();
@@ -389,7 +391,7 @@ if (empty($base_url)) {
                 header('Location: /?action=admin#categories');
                 exit;
             ?>
-            
+
         <?php elseif ($action === 'top-up-balance'): ?>
             <?php
                 requireLogin();
@@ -403,7 +405,6 @@ if (empty($base_url)) {
                     $_SESSION['topup_success'] = $result['success'];
                     
                     if ($result['success']) {
-                        // More reliable: directly update the session balance
                         $userModel = new User($db);
                         $current_balance = $_SESSION['user_balance'] ?? 0;
                         $new_balance = $current_balance + $amount;
@@ -411,7 +412,7 @@ if (empty($base_url)) {
                     }
                 }
                 
-                header('Location: ?action=dashboard');
+                header('Location: /?action=dashboard');
                 exit;
             ?>
 
@@ -432,7 +433,7 @@ if (empty($base_url)) {
                 $total_count = $search_results['total'];
                 $total_pages = ceil($total_count / $per_page);
             ?>
-            <?php include __DIR__ . '/app/views/search.php'; ?>
+            <?php include __DIR__ . '/../app/views/search.php'; ?>
 
         <?php endif; ?>
         </div>
