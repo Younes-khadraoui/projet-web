@@ -46,19 +46,34 @@ class AdController {
                 if (count($_FILES['photos']['name']) > 5) {
                     $errors[] = "Maximum 5 photos autorisées.";
                 } else {
-                    for ($i = 0; $i < count($_FILES['photos']['name']); $i++) {
-                        $file = [
-                            'name' => $_FILES['photos']['name'][$i],
-                            'tmp_name' => $_FILES['photos']['tmp_name'][$i],
-                            'size' => $_FILES['photos']['size'][$i],
-                            'error' => $_FILES['photos']['error'][$i]
-                        ];
+                    foreach ($_FILES['photos']['tmp_name'] as $key => $tmp_name) {
+                        if ($_FILES['photos']['error'][$key] === UPLOAD_ERR_OK) {
+                            $photo_file = [
+                                'name' => $_FILES['photos']['name'][$key],
+                                'tmp_name' => $tmp_name,
+                                'size' => $_FILES['photos']['size'][$key],
+                                'error' => $_FILES['photos']['error'][$key],
+                            ];
+                            
+                            $validation = validateImageUpload($photo_file);
+                            if (!$validation['success']) {
+                                $errors[] = "Photo " . ($key + 1) . ": " . $validation['message'];
+                                continue;
+                            }
 
-                        $validation = validateImageUpload($file, 204800); // 200KB
-                        if (!$validation['success']) {
-                            $errors[] = $validation['message'];
-                        } else {
-                            $uploaded_files[] = $file;
+                            // Corrected path to be relative from the project root
+                            $upload_dir = __DIR__ . '/../../public/uploads/';
+                            if (!is_dir($upload_dir)) {
+                                mkdir($upload_dir, 0755, true);
+                            }
+                            $filename = generateUniqueFilename($photo_file['name']);
+                            $destination = $upload_dir . $filename;
+
+                            if (move_uploaded_file($tmp_name, $destination)) {
+                                $uploaded_files[] = $filename;
+                            } else {
+                                $errors[] = "Erreur lors du déplacement de la photo " . ($key + 1) . ".";
+                            }
                         }
                     }
                 }

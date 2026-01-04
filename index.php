@@ -1,15 +1,15 @@
 <?php
-// public/index.php
+// index.php (root)
 
 // Handle installation process if .env file is missing
-if (!file_exists(__DIR__ . '/../.env')) {
+if (!file_exists(__DIR__ . '/.env')) {
     // If the request is for the installer, load it and exit
     if (strpos($_SERVER['REQUEST_URI'], '/install/index.php') !== false) {
-        require __DIR__ . '/../install/index.php';
+        require __DIR__ . '/install/index.php';
         exit;
     } else {
         // Otherwise, redirect to the installer
-        header('Location: ../install/index.php');
+        header('Location: install/index.php');
         exit;
     }
 }
@@ -17,16 +17,16 @@ if (!file_exists(__DIR__ . '/../.env')) {
 // Session start 
 session_start();
 
-require_once __DIR__ . '/../app/core/config.php';
-require_once __DIR__ . '/../app/core/database.php';
-require_once __DIR__ . '/../app/core/helpers.php';
-require_once __DIR__ . '/../app/controllers/AuthController.php';
-require_once __DIR__ . '/../app/controllers/CategoryController.php';
-require_once __DIR__ . '/../app/controllers/AdController.php';
-require_once __DIR__ . '/../app/controllers/AdminController.php';
-require_once __DIR__ . '/../app/models/Ad.php';
-require_once __DIR__ . '/../app/models/Transaction.php';
-require_once __DIR__ . '/../app/models/User.php';
+require_once __DIR__ . '/app/core/config.php';
+require_once __DIR__ . '/app/core/database.php';
+require_once __DIR__ . '/app/core/helpers.php';
+require_once __DIR__ . '/app/controllers/AuthController.php';
+require_once __DIR__ . '/app/controllers/CategoryController.php';
+require_once __DIR__ . '/app/controllers/AdController.php';
+require_once __DIR__ . '/app/controllers/AdminController.php';
+require_once __DIR__ . '/app/models/Ad.php';
+require_once __DIR__ . '/app/models/Transaction.php';
+require_once __DIR__ . '/app/models/User.php';
 
 // Initialize Database
 $database = new Database();
@@ -52,8 +52,9 @@ if (empty($base_url)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E-Bazar</title>
-    <link rel="stylesheet" href="<?php echo $base_url; ?>/assets/css/style.css">
+    <title>e-bazar | Petites Annonces</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="<?php echo $base_url; ?>/public/assets/css/style.css">
 </head>
 <body>
     <header>
@@ -92,21 +93,21 @@ if (empty($base_url)) {
                 $categories = $categoryController->getAllWithCounts();
                 $recent_ads = $adModel->getRecent(4);
             ?>
-            <?php include __DIR__ . '/../app/views/home.php'; ?>
+            <?php include __DIR__ . '/app/views/home.php'; ?>
 
         <?php elseif ($action === 'login'): ?>
             <?php
                 $authController = new AuthController($db);
                 $auth_data = $authController->login();
             ?>
-            <?php include __DIR__ . '/../app/views/login.php'; ?>
+            <?php include __DIR__ . '/app/views/login.php'; ?>
 
         <?php elseif ($action === 'register'): ?>
             <?php
                 $authController = new AuthController($db);
                 $auth_data = $authController->register();
             ?>
-            <?php include __DIR__ . '/../app/views/register.php'; ?>
+            <?php include __DIR__ . '/app/views/register.php'; ?>
 
         <?php elseif ($action === 'logout'): ?>
             <?php
@@ -122,7 +123,7 @@ if (empty($base_url)) {
                 $categories = $result['categories'];
                 $errors = $result['errors'];
             ?>
-            <?php include __DIR__ . '/../app/views/create-ad.php'; ?>
+            <?php include __DIR__ . '/app/views/create-ad.php'; ?>
 
         <?php elseif ($action === 'category'): ?>
             <?php
@@ -150,7 +151,7 @@ if (empty($base_url)) {
                 }
             ?>
             <?php if ($category): ?>
-                <?php include __DIR__ . '/../app/views/category.php'; ?>
+                <?php include __DIR__ . '/app/views/category.php'; ?>
             <?php else: ?>
                 <p><em>Catégorie non trouvée.</em></p>
             <?php endif; ?>
@@ -177,7 +178,7 @@ if (empty($base_url)) {
                     $photos = [];
                 }
             ?>
-            <?php include __DIR__ . '/../app/views/ad.php'; ?>
+            <?php include __DIR__ . '/app/views/ad.php'; ?>
 
         <?php elseif ($action === 'buy'): ?>
             <?php
@@ -247,14 +248,14 @@ if (empty($base_url)) {
                         // Allow deletion only if not sold or if owner
                         if ($ad && !$ad['is_sold']) {
                             $adModel->delete($ad_id);
-                            header('Location: /?action=dashboard');
+                            header('Location: ?action=dashboard');
                             exit;
                         }
                     }
                 }
                 
                 // If we get here, permission denied or ad not found
-                header('Location: /?action=dashboard');
+                header('Location: ?action=dashboard');
                 exit;
             ?>
 
@@ -272,13 +273,13 @@ if (empty($base_url)) {
                         // Mark as received but don't delete
                         $adModel->markAsReceived($ad_id);
                         
-                        header('Location: /?action=dashboard');
+                        header('Location: ?action=dashboard');
                         exit;
                     }
                 }
                 
                 // If we get here, permission denied
-                header('Location: /?action=dashboard');
+                header('Location: ?action=dashboard');
                 exit;
             ?>
 
@@ -291,8 +292,8 @@ if (empty($base_url)) {
                 $sold_ads = $adModel->getSoldByUser($_SESSION['user_id']);
                 $purchased_ads = $adModel->getPurchasedByUser($_SESSION['user_id']);
             ?>
-            <?php include __DIR__ . '/../app/views/dashboard.php'; ?>
-
+            <?php include __DIR__ . '/app/views/dashboard.php'; ?>
+            
         <?php elseif ($action === 'admin'): ?>
             <?php
                 requireAdmin();
@@ -302,7 +303,7 @@ if (empty($base_url)) {
                 $users = $adminController->getAllUsers();
                 $categories = $adminController->getAllCategories();
             ?>
-            <?php include __DIR__ . '/../app/views/admin.php'; ?>
+            <?php include __DIR__ . '/app/views/admin.php'; ?>
 
         <?php elseif ($action === 'admin-delete-ad'): ?>
             <?php
@@ -318,7 +319,7 @@ if (empty($base_url)) {
                     $_SESSION['admin_message_type'] = $result['success'] ? 'success' : 'error';
                 }
                 
-                header('Location: /?action=admin');
+                header('Location: /?action=admin#ads');
                 exit;
             ?>
 
@@ -374,7 +375,7 @@ if (empty($base_url)) {
                 header('Location: /?action=admin#categories');
                 exit;
             ?>
-
+            
         <?php elseif ($action === 'admin-delete-category'): ?>
             <?php
                 requireAdmin();
@@ -391,7 +392,7 @@ if (empty($base_url)) {
                 header('Location: /?action=admin#categories');
                 exit;
             ?>
-
+            
         <?php elseif ($action === 'top-up-balance'): ?>
             <?php
                 requireLogin();
@@ -413,7 +414,7 @@ if (empty($base_url)) {
                     }
                 }
                 
-                header('Location: /?action=dashboard');
+                header('Location: ?action=dashboard');
                 exit;
             ?>
 
@@ -434,7 +435,7 @@ if (empty($base_url)) {
                 $total_count = $search_results['total'];
                 $total_pages = ceil($total_count / $per_page);
             ?>
-            <?php include __DIR__ . '/../app/views/search.php'; ?>
+            <?php include __DIR__ . '/app/views/search.php'; ?>
 
         <?php endif; ?>
         </div>

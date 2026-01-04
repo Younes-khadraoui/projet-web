@@ -133,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 1) {
             <div class="success-box">
                 <h1>Installation Réussie!</h1>
                 <p>La base de données et le fichier de configuration ont été créés avec succès.</p>
-                <a href="../public/index.php" class="btn">Accéder au site</a>
+                <a href="../index.php" class="btn">Accéder au site</a>
                 <p class="note"><strong>Important:</strong> Pour des raisons de sécurité, veuillez supprimer le dossier <code>/install</code> de votre serveur.</p>
             </div>
         <?php endif; ?>
