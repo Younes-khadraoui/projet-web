@@ -13,15 +13,15 @@
                 <?php if (!empty($photos)): ?>
                     <div class="photo-gallery">
                         <div class="main-photo">
-                            <img id="mainPhoto" src="/uploads/<?php echo escape($photos[0]['filename']); ?>" alt="<?php echo escape($ad['title']); ?>">
+                            <img id="mainPhoto" src="public/uploads/<?php echo escape($photos[0]['filename']); ?>" alt="<?php echo escape($ad['title']); ?>">
                         </div>
                         <?php if (count($photos) > 1): ?>
                             <div class="thumbnail-list">
                                 <?php foreach ($photos as $index => $photo): ?>
                                     <img class="thumbnail <?php echo $index === 0 ? 'active' : ''; ?>" 
-                                         src="/uploads/<?php echo escape($photo['filename']); ?>" 
+                                         src="public/uploads/<?php echo escape($photo['filename']); ?>" 
                                          alt="Photo <?php echo $index + 1; ?>"
-                                         onclick="changePhoto('/uploads/<?php echo escape($photo['filename']); ?>')">
+                                         onclick="changePhoto('public/uploads/<?php echo escape($photo['filename']); ?>')">
                                 <?php endforeach; ?>
                             </div>
                         <?php endif; ?>

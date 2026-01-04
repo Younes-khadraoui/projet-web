@@ -34,7 +34,7 @@
                 <div class="ad-card">
                     <div class="ad-thumbnail">
                         <?php if (!empty($ad['thumbnail'])): ?>
-                            <img src="/uploads/<?php echo escape($ad['thumbnail']); ?>" alt="<?php echo escape($ad['title']); ?>">
+                            <img src="public/uploads/<?php echo escape($ad['thumbnail']); ?>" alt="<?php echo escape($ad['title']); ?>">
                         <?php else: ?>
                             <div class="no-image">Pas de photo</div>
                         <?php endif; ?>

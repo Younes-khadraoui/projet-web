@@ -7,8 +7,10 @@ $is_installed = file_exists($env_path);
 $step = isset($_GET['step']) ? (int)$_GET['step'] : 1;
 $error_message = null;
 
+// If already installed, don't allow re-installation unless forced
 if ($is_installed && !isset($_GET['force'])) {
-    header("Location: ../public/index.php");
+    // Corrected to redirect to the root index.php
+    header("Location: ../index.php");
     exit;
 }
 
@@ -133,6 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 1) {
             <div class="success-box">
                 <h1>Installation Réussie!</h1>
                 <p>La base de données et le fichier de configuration ont été créés avec succès.</p>
+                <!-- Corrected to link to the root index.php -->
                 <a href="../index.php" class="btn">Accéder au site</a>
                 <p class="note"><strong>Important:</strong> Pour des raisons de sécurité, veuillez supprimer le dossier <code>/install</code> de votre serveur.</p>
             </div>
