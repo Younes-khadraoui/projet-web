@@ -17,7 +17,7 @@ Compatibilité PHP
 Pour configurer le projet pour la première fois, suivez les étapes ci-dessous :
 
 ```bash
-cp projet-web /var/www/html
+cp -r projet-web /var/www/html
 cd /var/www/html
 sudo chown -R www-data:www-data projet-web
 ```
