@@ -42,7 +42,7 @@
                             <div class="ad-info">
                                 <h4><?php echo escape($ad['title']); ?></h4>
                                 <p class="price"><?php echo formatPrice($ad['price']); ?></p>
-                                <a href="/?action=ad&id=<?php echo $ad['id']; ?>" class="btn btn-primary btn-sm">Voir</a>
+                                <a href="<?= $base_url ?>/?action=ad&id=<?php echo $ad['id']; ?>" class="btn btn-primary btn-sm">Voir l'annonce</a>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -70,7 +70,7 @@
                                 <h4><?php echo escape($ad['title']); ?></h4>
                                 <p class="price"><?php echo formatPrice($ad['price']); ?></p>
                                 <p class="buyer">Acheteur: <?php echo isset($ad['buyer_name']) ? escape($ad['buyer_name']) : 'Anonyme'; ?></p>
-                                <a href="/?action=ad&id=<?php echo $ad['id']; ?>" class="btn btn-secondary btn-sm">Voir</a>
+                                <a href="<?= $base_url ?>/?action=ad&id=<?php echo $ad['id']; ?>" class="btn btn-secondary btn-sm">Voir l'annonce</a>
                             </div>
                         </div>
                     <?php endforeach; ?>
