@@ -1,6 +1,19 @@
 <?php
 // public/index.php
 
+// Handle installation process if .env file is missing
+if (!file_exists(__DIR__ . '/../.env')) {
+    // If the request is for the installer, load it and exit
+    if (strpos($_SERVER['REQUEST_URI'], '/install/index.php') !== false) {
+        require __DIR__ . '/../install/index.php';
+        exit;
+    } else {
+        // Otherwise, redirect to the installer
+        header('Location: ../install/index.php');
+        exit;
+    }
+}
+
 // Session start 
 session_start();
 
@@ -39,25 +52,31 @@ if (empty($base_url)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>e-bazar | Petites Annonces</title>
+    <title>E-Bazar</title>
     <link rel="stylesheet" href="<?php echo $base_url; ?>/assets/css/style.css">
 </head>
 <body>
     <header>
         <div class="header-container">
-            <h1>e-bazar</h1>
+            <h1><a href="/" style="text-decoration: none; color: var(--primary);">e-bazar</a></h1>
             <nav>
-                <a href="index.php">Accueil</a> | 
+                <a href="/">Accueil</a>
+                <form action="/" method="GET" class="search-bar">
+                    <input type="hidden" name="action" value="search">
+                    <input type="text" name="q" placeholder="Rechercher des annonces..." value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
+                    <button type="submit"><i class="fas fa-search"></i></button>
+                </form>
                 <?php if (isLoggedIn()): ?>
-                    <span>Bienvenue <?php echo escape($current_user['name']); ?></span> |
-                    <a href="?action=dashboard">Mon espace</a> |
+                    <span class="nav-user">| Bienvenue, <?php echo escape($current_user['name']); ?></span>
+                    <span class="nav-balance" onclick="openModal('topUpModal')" style="cursor: pointer;">| Solde: <strong><?php echo formatPrice($current_user['balance']); ?></strong></span>
+                    <a href="?action=dashboard">Mon espace</a>
                     <?php if ($current_user['role'] === 'admin'): ?>
-                        <a href="?action=admin">Admin</a> |
+                        <a href="?action=admin">Admin</a>
                     <?php endif; ?>
                     <a href="?action=logout">Déconnexion</a>
                 <?php else: ?>
-                    <a href="?action=login">Connexion</a> |
-                    <a href="?action=register">S'inscrire</a>
+                    <a href="?action=login">| Connexion</a>
+                    <a href="?action=register">| S'inscrire</a>
                 <?php endif; ?>
             </nav>
         </div>
@@ -162,8 +181,17 @@ if (empty($base_url)) {
 
         <?php elseif ($action === 'buy'): ?>
             <?php
-                requireLogin();
-                $ad_id = isset($_POST['ad_id']) ? (int)$_POST['ad_id'] : 0;
+                requireLogin(); // This will handle redirecting if the user is not logged in
+
+                $ad_id = isset($_POST['ad_id']) ? (int)$_POST['ad_id'] : (isset($_GET['id']) ? (int)$_GET['id'] : 0);
+                
+                // If this is a GET request, it means the user just logged in.
+                // We show them the ad page again so they can confirm the purchase.
+                if ($_SERVER['REQUEST_METHOD'] === 'GET' && $ad_id > 0) {
+                    header('Location: ?action=ad&id=' . $ad_id);
+                    exit;
+                }
+
                 $delivery_type = isset($_POST['delivery_type']) ? trim($_POST['delivery_type']) : '';
                 
                 if ($ad_id > 0 && !empty($delivery_type)) {
@@ -184,15 +212,11 @@ if (empty($base_url)) {
                             // Mark ad as sold
                             $adModel->markAsSold($ad_id, $_SESSION['user_id']);
                             
-                            // Update session balance
-                            $userModel = new User($db);
-                            $updatedUser = $userModel->getById($_SESSION['user_id']);
-                            if ($updatedUser) {
-                                $_SESSION['user_balance'] = $updatedUser['balance'] ?? 0;
-                            }
+                            // Update session balance directly
+                            $_SESSION['user_balance'] -= $ad['price'];
                             
                             $_SESSION['purchase_message'] = 'Achat réussi!';
-                            header('Location: /?action=dashboard');
+                            header('Location: ?action=dashboard');
                             exit;
                         } else {
                             // Payment failed
@@ -381,12 +405,11 @@ if (empty($base_url)) {
                     $_SESSION['topup_success'] = $result['success'];
                     
                     if ($result['success']) {
-                        // Update session balance
+                        // More reliable: directly update the session balance
                         $userModel = new User($db);
-                        $updatedUser = $userModel->getById($_SESSION['user_id']);
-                        if ($updatedUser) {
-                            $_SESSION['user_balance'] = $updatedUser['balance'] ?? 0;
-                        }
+                        $current_balance = $_SESSION['user_balance'] ?? 0;
+                        $new_balance = $current_balance + $amount;
+                        $_SESSION['user_balance'] = $userModel->updateBalance($_SESSION['user_id'], $new_balance);
                     }
                 }
                 
@@ -394,12 +417,60 @@ if (empty($base_url)) {
                 exit;
             ?>
 
+        <?php elseif ($action === 'search'): ?>
+            <?php
+                $search_query = isset($_GET['q']) ? trim($_GET['q']) : '';
+                $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+                $per_page = 10; // Number of search results per page
+
+                $adModel = new Ad($db);
+                $search_results = ['ads' => [], 'total' => 0];
+
+                if (!empty($search_query)) {
+                    $search_results = $adModel->search($search_query, $page, $per_page);
+                }
+
+                $ads = $search_results['ads'];
+                $total_count = $search_results['total'];
+                $total_pages = ceil($total_count / $per_page);
+            ?>
+            <?php include __DIR__ . '/../app/views/search.php'; ?>
+
         <?php endif; ?>
         </div>
     </main>
 
-    <footer>
-        <p>&copy; 2025 e-bazar - Projet Web M1</p>
-    </footer>
+    <?php if (isLoggedIn()): ?>
+    <!-- Top Up Balance Modal -->
+    <div id="topUpModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('topUpModal')">&times;</span>
+            <h2>Créditer votre solde</h2>
+            <form method="POST" action="?action=top-up-balance">
+                <div class="form-group">
+                    <label for="topUpAmount">Montant à créditer (€)</label>
+                    <input type="number" id="topUpAmount" name="amount" step="0.01" min="0.01" max="10000" placeholder="Ex: 50.00" required>
+                    <small>Montant minimum: 0.01 € | Maximum: 10 000 €</small>
+                </div>
+                <div class="form-group" style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('topUpModal')">Annuler</button>
+                    <button type="submit" class="btn btn-success">Créditer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.add('show');
+        }
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) modal.classList.remove('show');
+        }
+    </script>
+    <?php endif; ?>
+
 </body>
 </html>

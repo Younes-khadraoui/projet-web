@@ -88,8 +88,24 @@ class User {
      * @return array|null
      */
     public function getById($id) {
-        $stmt = $this->db->prepare('SELECT id, name, email, role, created_at FROM users WHERE id = ?');
+        $stmt = $this->db->prepare('SELECT id, name, email, role, balance, created_at FROM users WHERE id = ?');
         $stmt->execute([$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Update a user's balance and return the new balance
+     * @param int $id
+     * @param float $new_balance
+     * @return float|null
+     */
+    public function updateBalance($id, $new_balance) {
+        try {
+            $stmt = $this->db->prepare('UPDATE users SET balance = ? WHERE id = ?');
+            $stmt->execute([$new_balance, $id]);
+            return $new_balance;
+        } catch (Exception $e) {
+            return null;
+        }
     }
 }

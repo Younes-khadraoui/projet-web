@@ -98,7 +98,7 @@
                         </button>
                     <?php elseif ($can_buy): ?>
                         <!-- Buy Actions -->
-                        <button class="btn btn-primary btn-buy" onclick="openBuyModal(<?php echo $ad['id']; ?>, '<?php echo implode(',', array_map('trim', explode(',', $ad['delivery_type']))); ?>')">
+                        <button class="btn btn-primary btn-buy" onclick="openModal('buyModal')">
                             Acheter
                         </button>
                     <?php elseif ($ad['is_sold']): ?>
@@ -106,9 +106,10 @@
                             Cet article a été vendu
                         </button>
                     <?php else: ?>
-                        <button class="btn btn-primary" onclick="location.href='?action=login'">
-                            Connexion requise
-                        </button>
+                        <!-- If user is not logged in, clicking buy will trigger requireLogin() -->
+                        <a href="?action=buy&id=<?= $ad['id'] ?>" class="btn btn-primary">
+                            Acheter
+                        </a>
                     <?php endif; ?>
                     
                     <a href="/" class="btn btn-secondary">Retour à l'accueil</a>
@@ -119,25 +120,33 @@
         <!-- Buy Modal -->
         <div id="buyModal" class="modal">
             <div class="modal-content">
-                <span class="modal-close" onclick="closeBuyModal()">&times;</span>
+                <span class="modal-close" onclick="closeModal('buyModal')">&times;</span>
                 <h2>Confirmer l'achat</h2>
                 
-                <form method="POST" action="?action=buy">
-                    <input type="hidden" name="ad_id" id="adIdInput" value="">
-                    
+                <form id="buyForm" method="POST" action="?action=buy">
+                    <input type="hidden" name="ad_id" value="<?= $ad['id'] ?>">
                     <div class="form-group">
-                        <label for="delivery">Mode de livraison *</label>
-                        <select id="delivery" name="delivery_type" required>
-                            <option value="">-- Sélectionner un mode --</option>
-                            <option value="retrait">Retrait sur place</option>
-                            <option value="livraison">Livraison possible</option>
-                            <option value="mondial">Mondial Relay</option>
+                        <label for="delivery_type">Choisir le mode de livraison :</label>
+                        <select name="delivery_type" id="delivery_type" required>
+                            <option value="" disabled selected>-- Sélectionnez une option --</option>
+                            <?php
+                            // Explode the comma-separated string of delivery types
+                            $delivery_options = explode(',', $ad['delivery_type']);
+                            foreach ($delivery_options as $option) {
+                                $option = trim($option);
+                                if (!empty($option)) {
+                                    // Use the helper to get a user-friendly label
+                                    $label = htmlspecialchars(getDeliveryLabel($option));
+                                    echo "<option value=\"" . htmlspecialchars($option) . "\">" . $label . "</option>";
+                                }
+                            }
+                            ?>
                         </select>
                     </div>
 
                     <div class="modal-actions">
                         <button type="submit" class="btn btn-primary">Confirmer l'achat</button>
-                        <button type="button" class="btn btn-secondary" onclick="closeBuyModal()">Annuler</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('buyModal')">Annuler</button>
                     </div>
                 </form>
             </div>
@@ -146,7 +155,7 @@
         <!-- Delete Modal -->
         <div id="deleteModal" class="modal">
             <div class="modal-content">
-                <span class="modal-close" onclick="closeDeleteModal()">&times;</span>
+                <span class="modal-close" onclick="closeModal('deleteModal')">&times;</span>
                 <h2>Supprimer l'annonce</h2>
                 
                 <p>Êtes-vous sûr de vouloir supprimer cette annonce ? Cette action est irréversible.</p>
@@ -156,7 +165,7 @@
                     
                     <div class="modal-actions">
                         <button type="submit" class="btn btn-danger">Supprimer</button>
-                        <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Annuler</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('deleteModal')">Annuler</button>
                     </div>
                 </form>
             </div>
@@ -181,54 +190,30 @@ function changePhoto(photoUrl) {
     });
 }
 
-function openBuyModal(adId, deliveryModes) {
-    document.getElementById('adIdInput').value = adId;
-    const select = document.getElementById('delivery');
-    const modes = deliveryModes.split(',').map(m => m.trim());
-    
-    // Clear and populate options
-    select.innerHTML = '<option value="">-- Sélectionner un mode --</option>';
-    const labels = {
-        'retrait': 'Retrait sur place',
-        'livraison': 'Livraison possible',
-        'mondial': 'Mondial Relay'
-    };
-    
-    modes.forEach(mode => {
-        if (labels[mode]) {
-            const opt = document.createElement('option');
-            opt.value = mode;
-            opt.textContent = labels[mode];
-            select.appendChild(opt);
-        }
-    });
-    
-    document.getElementById('buyModal').classList.add('show');
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.add('show');
+    }
 }
 
-function closeBuyModal() {
-    document.getElementById('buyModal').classList.remove('show');
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('show');
+    }
 }
 
 function openDeleteModal(adId) {
     document.getElementById('deleteAdIdInput').value = adId;
-    document.getElementById('deleteModal').classList.add('show');
+    openModal('deleteModal');
 }
 
-function closeDeleteModal() {
-    document.getElementById('deleteModal').classList.remove('show');
-}
 
 // Close modals when clicking outside
 window.onclick = function(event) {
-    const buyModal = document.getElementById('buyModal');
-    const deleteModal = document.getElementById('deleteModal');
-    
-    if (event.target === buyModal) {
-        buyModal.classList.remove('show');
-    }
-    if (event.target === deleteModal) {
-        deleteModal.classList.remove('show');
+    if (event.target.classList.contains('modal')) {
+        event.target.classList.remove('show');
     }
 }
 </script>

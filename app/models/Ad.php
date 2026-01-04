@@ -239,4 +239,42 @@ class Ad {
         $stmt->execute([$ad_id, $user_id]);
         return $stmt->rowCount() > 0;
     }
+
+    /**
+     * Search for ads by title or description
+     * @param string $query The search query
+     * @param int $page Current page number
+     * @param int $per_page Ads per page
+     * @return array ['ads' => array, 'total' => int]
+     */
+    public function search($query, $page, $per_page) {
+        $offset = ($page - 1) * $per_page;
+        $search_term = '%' . $query . '%';
+
+        // Query for ads
+        $stmt = $this->db->prepare(
+             'SELECT a.id, a.title, a.price, a.is_sold, 
+                    (SELECT p.filename FROM photos p WHERE p.ad_id = a.id ORDER BY p.is_primary DESC, p.id ASC LIMIT 1) as thumbnail
+             FROM ads a
+             WHERE (a.title LIKE :search_term OR a.description LIKE :search_term) AND a.is_sold = 0
+             ORDER BY a.created_at DESC
+             LIMIT :offset, :limit'
+        );
+        $search_param = '%' . $query . '%';
+        $stmt->bindParam(':search_term', $search_param, PDO::PARAM_STR);
+        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindParam(':limit', $per_page, PDO::PARAM_INT);
+        $stmt->execute();
+        $ads = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Get total count for pagination
+        $total_stmt = $this->db->prepare(
+            'SELECT COUNT(*) FROM ads 
+             WHERE (title LIKE ? OR description LIKE ?) AND is_sold = 0'
+        );
+        $total_stmt->execute([$search_term, $search_term]);
+        $total_count = $total_stmt->fetchColumn();
+
+        return ['ads' => $ads, 'total' => $total_count];
+    }
 }

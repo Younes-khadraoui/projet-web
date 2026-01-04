@@ -16,22 +16,25 @@ class Transaction {
             // Start transaction
             $this->db->beginTransaction();
 
-            // Check buyer has sufficient balance
-            $stmt = $this->db->prepare('SELECT balance FROM users WHERE id = ?');
-            $stmt->execute([$buyer_id]);
-            $buyer = $stmt->fetch(PDO::FETCH_ASSOC);
+            $userModel = new User($this->db);
 
-            if ($buyer['balance'] < $amount) {
-                return ['success' => false, 'message' => 'Solde insuffisant pour cette achat.'];
+            // Check buyer has sufficient balance
+            $buyer = $userModel->getById($buyer_id);
+            if (!$buyer || $buyer['balance'] < $amount) {
+                return ['success' => false, 'message' => 'Solde insuffisant pour cet achat.'];
+            }
+            
+            // Get seller to update their balance
+            $seller = $userModel->getById($seller_id);
+            if (!$seller) {
+                return ['success' => false, 'message' => 'Vendeur non trouvé.'];
             }
 
             // Deduct from buyer
-            $stmt = $this->db->prepare('UPDATE users SET balance = balance - ? WHERE id = ?');
-            $stmt->execute([$amount, $buyer_id]);
+            $userModel->updateBalance($buyer_id, $buyer['balance'] - $amount);
 
             // Add to seller
-            $stmt = $this->db->prepare('UPDATE users SET balance = balance + ? WHERE id = ?');
-            $stmt->execute([$amount, $seller_id]);
+            $userModel->updateBalance($seller_id, $seller['balance'] + $amount);
 
             // Record transaction
             $stmt = $this->db->prepare(
@@ -62,9 +65,6 @@ class Transaction {
         }
 
         try {
-            $stmt = $this->db->prepare('UPDATE users SET balance = balance + ? WHERE id = ?');
-            $stmt->execute([$amount, $user_id]);
-            
             // Record top-up transaction
             $stmt = $this->db->prepare(
                 'INSERT INTO transactions (user_id, amount, type, created_at) 

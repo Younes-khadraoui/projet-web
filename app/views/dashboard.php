@@ -1,11 +1,5 @@
 <div class="dashboard">
-    <div class="dashboard-header">
-        <h2>Tableau de Bord</h2>
-        <div class="balance-box" onclick="openTopUpModal()" style="cursor: pointer;">
-            <span>Solde:</span>
-            <span class="balance-amount"><?= formatPrice($current_user['balance']) ?></span>
-        </div>
-    </div>
+    <h2>Tableau de Bord</h2>
 
     <?php if (isset($_SESSION['topup_message'])): ?>
         <div class="alert alert-<?= $_SESSION['topup_success'] ? 'success' : 'danger' ?>">
@@ -168,42 +162,11 @@ function closeReceiptModal() {
     document.getElementById('receiptModal').classList.remove('show');
 }
 
-function openTopUpModal() {
-    document.getElementById('topUpModal').classList.add('show');
-}
-
-function closeTopUpModal() {
-    document.getElementById('topUpModal').classList.remove('show');
-}
-
 // Close modal when clicking outside
 window.onclick = function(event) {
-    const receiptModal = document.getElementById('receiptModal');
-    const topUpModal = document.getElementById('topUpModal');
-    if (event.target === receiptModal) {
-        receiptModal.classList.remove('show');
-    }
-    if (event.target === topUpModal) {
-        topUpModal.classList.remove('show');
+    const modal = document.getElementById('receiptModal');
+    if (event.target === modal) {
+        modal.classList.remove('show');
     }
 }
 </script>
-
-<!-- Top Up Balance Modal -->
-<div id="topUpModal" class="modal">
-    <div class="modal-content">
-        <span class="close" onclick="closeTopUpModal()">&times;</span>
-        <h2>Créditer votre solde</h2>
-        <form method="POST" action="?action=top-up-balance">
-            <div class="form-group">
-                <label for="topUpAmount">Montant à créditer (€)</label>
-                <input type="number" id="topUpAmount" name="amount" step="0.01" min="0.01" max="10000" placeholder="Ex: 50.00" required>
-                <small>Montant minimum: 0.01 € | Maximum: 10 000 €</small>
-            </div>
-            <div class="form-group" style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button type="button" class="btn btn-secondary" onclick="closeTopUpModal()">Annuler</button>
-                <button type="submit" class="btn btn-success">Créditer</button>
-            </div>
-        </form>
-    </div>
-</div>

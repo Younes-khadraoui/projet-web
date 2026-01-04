@@ -9,14 +9,11 @@
  * Redirects to login page if not authenticated
  * @param string $redirect Optional: page to redirect to after login (e.g., "?action=create_ad")
  */
-function requireLogin($redirect = null) {
+function requireLogin() {
     if (!isset($_SESSION['user_id'])) {
-        // Store the intended destination
-        if ($redirect === null) {
-            $redirect = $_SERVER['REQUEST_URI'];
-        }
-        $_SESSION['redirect_after_login'] = $redirect;
-        header('Location: ?action=login&redirect=' . urlencode($redirect));
+        // Store the page the user was trying to access
+        $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+        header('Location: ?action=login');
         exit;
     }
 }
@@ -84,17 +81,27 @@ function formatPrice($price) {
 }
 
 /**
+ * Format date for display
+ * @param string $date
+ * @return string
+ */
+function formatDate($date) {
+    if (!$date) return 'N/A';
+    return date('d/m/Y à H:i', strtotime($date));
+}
+
+/**
  * Translate delivery type to French
  * @param string $type (postal, hand, both)
  * @return string
  */
 function getDeliveryLabel($type) {
     $labels = [
-        'postal' => 'Envoi postal',
-        'hand' => 'Remise en main propre',
-        'both' => 'Envoi postal ou remise en main propre'
+        'delivery' => 'Livraison',
+        'hand_delivery' => 'Remise en main propre',
+        'relay' => 'Point relais'
     ];
-    return $labels[$type] ?? $type;
+    return $labels[trim($type)] ?? ucfirst(str_replace('_', ' ', trim($type)));
 }
 
 /**
@@ -130,13 +137,4 @@ function validateImageUpload($file, $max_size = 204800) {
 function generateUniqueFilename($original_name) {
     $ext = pathinfo($original_name, PATHINFO_EXTENSION);
     return bin2hex(random_bytes(16)) . '.' . strtolower($ext);
-}
-/**
- * Format date for display
- * @param string $date
- * @return string
- */
-function formatDate($date) {
-    $timestamp = strtotime($date);
-    return date('d/m/Y H:i', $timestamp);
 }

@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS `photos`;
 DROP TABLE IF EXISTS `ads`;
 DROP TABLE IF EXISTS `categories`;
 DROP TABLE IF EXISTS `users`;
+DROP TABLE IF EXISTS `transactions`;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- 1. Users
@@ -76,15 +77,3 @@ ALTER TABLE `ads` ADD CONSTRAINT `fk_category` FOREIGN KEY (`category_id`) REFER
 ALTER TABLE `ads` ADD CONSTRAINT `fk_seller` FOREIGN KEY (`seller_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 ALTER TABLE `ads` ADD CONSTRAINT `fk_buyer` FOREIGN KEY (`buyer_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 ALTER TABLE `photos` ADD CONSTRAINT `fk_ad_photos` FOREIGN KEY (`ad_id`) REFERENCES `ads` (`id`) ON DELETE CASCADE;
-
--- Seed data: Admin user (email: admin@ebazar.fr, password: admin123)
-INSERT INTO `users` (`name`, `email`, `password`, `role`) VALUES 
-('Administrator', 'admin@ebazar.fr', '$2y$12$pe8b9tzdu8z/Qh6Ve4T2I.x7UUcZYE/GsEewSFvoXQVk8gmqYvzAy', 'admin');
-
--- Seed data: Default categories
-INSERT INTO `categories` (`name`) VALUES 
-('Électronique'), 
-('Vêtements'), 
-('Maison'), 
-('Loisirs'), 
-('Autres');
