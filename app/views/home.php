@@ -2,7 +2,7 @@
     <?php if (isLoggedIn()): ?>
         <div class="create-ad-section">
             <p>Vous avez quelque chose à vendre?</p>
-            <a href="/?action=create-ad" class="btn btn-primary">Créer une Annonce</a>
+            <a href="<?= $base_url ?>/?action=create-ad" class="btn btn-primary">Créer une Annonce</a>
         </div>
     <?php endif; ?>
 

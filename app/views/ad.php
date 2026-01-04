@@ -112,7 +112,7 @@
                         </a>
                     <?php endif; ?>
                     
-                    <a href="/" class="btn btn-secondary">Retour à l'accueil</a>
+                    <a href="<?= $base_url ?>/" class="btn btn-secondary">Retour à l'accueil</a>
                 </div>
             </div>
         </div>
@@ -174,7 +174,7 @@
     <?php else: ?>
         <div class="error-message">
             <p><em>Annonce non trouvée.</em></p>
-            <a href="/" class="btn btn-secondary">Retour à l'accueil</a>
+            <a href="<?= $base_url ?>/" class="btn btn-secondary">Retour à l'accueil</a>
         </div>
     <?php endif; ?>
 </div>

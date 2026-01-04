@@ -37,13 +37,16 @@ $action = isset($_GET['action']) ? $_GET['action'] : 'home';
 $auth_data = null;
 $current_user = getCurrentUser();
 
-// Determine base URL for assets
+// Determine base URL for assets and links
 $base_url = Config::get('BASE_URL', '');
 if (empty($base_url)) {
     // Auto-detect if not set in .env
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
-    $base_url = $protocol . '://' . $host;
+    $script_name = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+    // If in a subdirectory, SCRIPT_NAME will contain it. If at root, it will be '/'.
+    $base_path = ($script_name == '/') ? '' : $script_name;
+    $base_url = $protocol . '://' . $host . $base_path;
 }
 
 ?>
@@ -59,10 +62,10 @@ if (empty($base_url)) {
 <body>
     <header>
         <div class="header-container">
-            <h1><a href="/" style="text-decoration: none; color: var(--primary);">e-bazar</a></h1>
+            <h1><a href="<?= $base_url ?>/" style="text-decoration: none; color: var(--primary);">e-bazar</a></h1>
             <nav>
-                <a href="/">Accueil</a>
-                <form action="/" method="GET" class="search-bar">
+                <a href="<?= $base_url ?>/">Accueil</a>
+                <form action="<?= $base_url ?>/" method="GET" class="search-bar">
                     <input type="hidden" name="action" value="search">
                     <input type="text" name="q" placeholder="Rechercher des annonces..." value="<?= htmlspecialchars($_GET['q'] ?? '') ?>">
                     <button type="submit"><i class="fas fa-search"></i></button>
@@ -70,14 +73,14 @@ if (empty($base_url)) {
                 <?php if (isLoggedIn()): ?>
                     <span class="nav-user">| Bienvenue, <?php echo escape($current_user['name']); ?></span>
                     <span class="nav-balance" onclick="openModal('topUpModal')" style="cursor: pointer;">| Solde: <strong><?php echo formatPrice($current_user['balance']); ?></strong></span>
-                    <a href="?action=dashboard">Mon espace</a>
+                    <a href="<?= $base_url ?>/?action=dashboard">Mon espace</a>
                     <?php if ($current_user['role'] === 'admin'): ?>
-                        <a href="?action=admin">Admin</a>
+                        <a href="<?= $base_url ?>/?action=admin">Admin</a>
                     <?php endif; ?>
-                    <a href="?action=logout">Déconnexion</a>
+                    <a href="<?= $base_url ?>/?action=logout">Déconnexion</a>
                 <?php else: ?>
-                    <a href="?action=login">| Connexion</a>
-                    <a href="?action=register">| S'inscrire</a>
+                    <a href="<?= $base_url ?>/?action=login">| Connexion</a>
+                    <a href="<?= $base_url ?>/?action=register">| S'inscrire</a>
                 <?php endif; ?>
             </nav>
         </div>
