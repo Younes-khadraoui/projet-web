@@ -121,20 +121,21 @@ class Ad {
     }
 
     /**
-     * Get the 4 most recent ads
+     * Get the most recent ads
+     * @param int $limit Number of ads to fetch
      * @return array
      */
-    public function getRecent($limit = 4) {
-        $limit = (int)$limit;
+    public function getRecent($limit) {
         $stmt = $this->db->prepare(
-            'SELECT a.*, u.name as seller_name,
-                    (SELECT filename FROM photos WHERE ad_id = a.id AND is_primary = 1 LIMIT 1) as thumbnail
+            'SELECT a.id, a.title, a.price, u.name as seller_name,
+                    (SELECT p.filename FROM photos p WHERE p.ad_id = a.id ORDER BY p.is_primary DESC, p.id ASC LIMIT 1) as thumbnail
              FROM ads a
-             LEFT JOIN users u ON a.seller_id = u.id
+             JOIN users u ON a.seller_id = u.id
              WHERE a.is_sold = 0
              ORDER BY a.created_at DESC
-             LIMIT ' . $limit
+             LIMIT :limit'
         );
+        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
