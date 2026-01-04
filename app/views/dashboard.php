@@ -136,18 +136,30 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const initialTab = window.location.hash.substring(1) || 'for-sale';
+    // Default to 'annonce' if no hash is present or hash is empty
+    const initialTab = window.location.hash.substring(1) || 'annonce';
     activateTab(initialTab);
 });
 
+// Listen for when the user clicks the browser's back/forward buttons
 window.addEventListener('hashchange', function() {
-    const tabName = window.location.hash.substring(1) || 'for-sale';
+    const tabName = window.location.hash.substring(1) || 'annonce';
     activateTab(tabName);
 });
 
 function switchTab(event, tabName) {
-    event.preventDefault(); // Prevent the page from jumping
-    window.location.hash = tabName;
+    event.preventDefault();
+    
+    // Manually activate the tab content
+    activateTab(tabName);
+
+    // Update the URL hash without causing a page jump
+    if (tabName === 'annonce') {
+        // For the default tab, remove the hash from the URL
+        history.pushState(null, null, ' ');
+    } else {
+        window.location.hash = tabName;
+    }
 }
 
 function activateTab(tabName) {
@@ -161,7 +173,6 @@ function activateTab(tabName) {
     const tabToShow = document.getElementById(tabName);
     if (tabToShow) {
         tabToShow.classList.add('active');
-        // Find the button that controls this tab and activate it
         const correspondingButton = document.querySelector(`.tab-btn[onclick*="'\${tabName}'"]`);
         if (correspondingButton) {
             correspondingButton.classList.add('active');
