@@ -270,7 +270,7 @@ if (empty($base_url)) {
                         // Mark as received but don't delete
                         $adModel->markAsReceived($ad_id);
                         
-                        header('Location: ?action=dashboard');
+                        header('Location: ?action=dashboard#achats');
                         exit;
                     }
                 }

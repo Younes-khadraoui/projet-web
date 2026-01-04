@@ -17,13 +17,13 @@
     
     <?php if (isLoggedIn()): ?>
         <div class="tabs">
-            <button class="tab-btn active" onclick="switchTab('for-sale')">Mes Annonces</button>
-            <button class="tab-btn" onclick="switchTab('sold')">Vendues</button>
-            <button class="tab-btn" onclick="switchTab('purchased')">Mes Achats</button>
+            <button class="tab-btn active" onclick="switchTab(event, 'annonce')">Mes Annonces</button>
+            <button class="tab-btn" onclick="switchTab(event, 'vendue')">Vendues</button>
+            <button class="tab-btn" onclick="switchTab(event, 'achats')">Mes Achats</button>
         </div>
 
         <!-- Tab: For Sale -->
-        <div id="for-sale" class="tab-content active">
+        <div id="annonce" class="tab-content active">
             <h3>Annonces en Vente</h3>
             <?php if (empty($for_sale_ads)): ?>
                 <p><em>Vous n'avez pas d'annonces en vente.</em></p>
@@ -51,7 +51,7 @@
         </div>
 
         <!-- Tab: Sold -->
-        <div id="sold" class="tab-content">
+        <div id="vendue" class="tab-content">
             <h3>Annonces Vendues</h3>
             <?php if (empty($sold_ads)): ?>
                 <p><em>Vous n'avez pas encore vendu d'annonces.</em></p>
@@ -79,7 +79,7 @@
         </div>
 
         <!-- Tab: Purchased -->
-        <div id="purchased" class="tab-content">
+        <div id="achats" class="tab-content">
             <h3>Mes Achats</h3>
             <?php if (empty($purchased_ads)): ?>
                 <p><em>Vous n'avez pas encore acheté d'annonces.</em></p>
@@ -135,22 +135,38 @@
 </div>
 
 <script>
-function switchTab(tabName) {
+document.addEventListener('DOMContentLoaded', function() {
+    const initialTab = window.location.hash.substring(1) || 'for-sale';
+    activateTab(initialTab);
+});
+
+window.addEventListener('hashchange', function() {
+    const tabName = window.location.hash.substring(1) || 'for-sale';
+    activateTab(tabName);
+});
+
+function switchTab(event, tabName) {
+    event.preventDefault(); // Prevent the page from jumping
+    window.location.hash = tabName;
+}
+
+function activateTab(tabName) {
     // Hide all tab contents
-    var tabContents = document.querySelectorAll('.tab-content');
-    tabContents.forEach(function(tab) {
-        tab.classList.remove('active');
-    });
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     
-    // Remove active class from all buttons
-    var tabBtns = document.querySelectorAll('.tab-btn');
-    tabBtns.forEach(function(btn) {
-        btn.classList.remove('active');
-    });
-    
-    // Show selected tab
-    document.getElementById(tabName).classList.add('active');
-    event.target.classList.add('active');
+    // Deactivate all tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+    // Activate the correct tab and button
+    const tabToShow = document.getElementById(tabName);
+    if (tabToShow) {
+        tabToShow.classList.add('active');
+        // Find the button that controls this tab and activate it
+        const correspondingButton = document.querySelector(`.tab-btn[onclick*="'\${tabName}'"]`);
+        if (correspondingButton) {
+            correspondingButton.classList.add('active');
+        }
+    }
 }
 
 function openReceiptModal(adId) {

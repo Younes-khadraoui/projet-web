@@ -77,3 +77,7 @@ ALTER TABLE `ads` ADD CONSTRAINT `fk_category` FOREIGN KEY (`category_id`) REFER
 ALTER TABLE `ads` ADD CONSTRAINT `fk_seller` FOREIGN KEY (`seller_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 ALTER TABLE `ads` ADD CONSTRAINT `fk_buyer` FOREIGN KEY (`buyer_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
 ALTER TABLE `photos` ADD CONSTRAINT `fk_ad_photos` FOREIGN KEY (`ad_id`) REFERENCES `ads` (`id`) ON DELETE CASCADE;
+
+-- Default Admin User (password: admin123)
+INSERT INTO `users` (`name`, `email`, `password`, `role`, `balance`) VALUES
+('Administrator', 'admin@ebazar.fr', '$2y$12$mgk//7YNBrco4P4oP0Bnaey3AKRgOdgsvGzsVDXyYoG256IXKnsuS', 'admin', 1000.00);

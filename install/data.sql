@@ -1,9 +1,5 @@
 -- SEED DATA
 
--- Default Admin (password: admin123)
-INSERT INTO `users` (`name`, `email`, `password`, `role`, `balance`) VALUES
-('Administrator', 'admin@ebazar.fr', '$2y$12$mgk//7YNBrco4P4oP0Bnaey3AKRgOdgsvGzsVDXyYoG256IXKnsuS', 'admin', 1000.00);
-
 -- Dummy Users (password: password123)
 INSERT INTO `users` (`name`, `email`, `password`, `role`, `balance`) VALUES
 ('younes khx', 'younes@example.com', '$2y$12$9QqJuJ9RlLa5iQlfg3aj..dI1kwMfclpkiz7HJ5lEcj1mZA7unDni', 'user', 150.75),
