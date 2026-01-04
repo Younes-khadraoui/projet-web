@@ -111,14 +111,15 @@ function validateImageUpload($file, $max_size = 204800) {
     }
 
     // Check MIME type
-    $mime = mime_content_type($file['tmp_name']);
-    if (!in_array($mime, ['image/jpeg', 'image/jpg'])) {
-        return ['success' => false, 'message' => 'Seules les images JPEG sont acceptées.'];
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime_type = $finfo->file($file['tmp_name']);
+    if ($mime_type !== 'image/jpeg') {
+        return ['success' => false, 'message' => 'Seuls les fichiers JPG/JPEG sont autorisés.'];
     }
 
     // Check file size
     if ($file['size'] > $max_size) {
-        return ['success' => false, 'message' => 'La taille du fichier dépasse 200 KB.'];
+        return ['success' => false, 'message' => 'La taille du fichier dépasse 200 Ko.'];
     }
 
     return ['success' => true, 'message' => 'Validation réussie.'];

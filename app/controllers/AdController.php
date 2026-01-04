@@ -94,26 +94,21 @@ class AdController {
                 if ($result['success']) {
                     $ad_id = $result['ad_id'];
                     
-                    // Upload photos
-                    $upload_dir = __DIR__ . '/../../public/uploads/';
-                    foreach ($uploaded_files as $index => $file) {
-                        $unique_name = generateUniqueFilename($file['name']);
-                        $target_path = $upload_dir . $unique_name;
-                        
-                        if (move_uploaded_file($file['tmp_name'], $target_path)) {
-                            // Insert photo record (first photo is primary)
-                            $stmt = $this->db->prepare(
-                                'INSERT INTO photos (ad_id, filename, is_primary) VALUES (?, ?, ?)'
-                            );
-                            $is_primary = ($index === 0) ? 1 : 0;
-                            $stmt->execute([$ad_id, $unique_name, $is_primary]);
-                        }
+                    // Link uploaded photos to the ad
+                    foreach ($uploaded_files as $index => $filename) {
+                        $stmt = $this->db->prepare(
+                            'INSERT INTO photos (ad_id, filename, is_primary) VALUES (?, ?, ?)'
+                        );
+                        // The first photo in the array is the primary one
+                        $is_primary = ($index === 0) ? 1 : 0;
+                        $stmt->execute([$ad_id, $filename, $is_primary]);
                     }
                     
-                    header('Location: /?action=dashboard');
+                    // Redirect to the new ad page
+                    header('Location: ?action=ad&id=' . $ad_id);
                     exit;
                 } else {
-                    $errors[] = $result['message'];
+                    $errors[] = "Erreur lors de la création de l'annonce.";
                 }
             }
         }
