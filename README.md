@@ -5,7 +5,6 @@
 #### Développement en local
 
 ```bash
-cd public
 php -S localhost:8000
 # Accéder à : http://localhost:8000
 ```
