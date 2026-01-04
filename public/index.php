@@ -1,14 +1,11 @@
 <?php
 // public/index.php
 
-// Handle installation process if .env file is missing
 if (!file_exists(__DIR__ . '/../.env')) {
-    // If the request is for the installer, load it and exit
     if (strpos($_SERVER['REQUEST_URI'], '/install/index.php') !== false) {
         require __DIR__ . '/../install/index.php';
         exit;
     } else {
-        // Otherwise, redirect to the installer
         header('Location: ../install/index.php');
         exit;
     }
@@ -40,7 +37,6 @@ $current_user = getCurrentUser();
 // Determine base URL for assets
 $base_url = Config::get('BASE_URL', '');
 if (empty($base_url)) {
-    // Auto-detect if not set in .env
     $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'];
     $base_url = $protocol . '://' . $host;

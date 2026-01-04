@@ -7,9 +7,7 @@ $is_installed = file_exists($env_path);
 $step = isset($_GET['step']) ? (int)$_GET['step'] : 1;
 $error_message = null;
 
-// If already installed, don't allow re-installation unless forced
 if ($is_installed && !isset($_GET['force'])) {
-    // Corrected to redirect to the root index.php
     header("Location: ../index.php");
     exit;
 }
@@ -21,7 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 1) {
     $db_pass = trim($_POST['db_pass']);
     $seed_data = isset($_POST['seed_data']);
 
-    // 1. Test Connection
     try {
         $dsn = "mysql:host=$db_host";
         $pdo = new PDO($dsn, $db_user, $db_pass, [

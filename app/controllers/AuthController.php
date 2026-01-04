@@ -77,13 +77,12 @@ class AuthController {
                     $_SESSION['user_role'] = $result['user']['role'];
                     $_SESSION['user_balance'] = $result['user']['balance'];
                     
-                    // Redirect to the page the user was trying to access, or to the dashboard
                     if (isset($_SESSION['redirect_after_login'])) {
                         $redirect_url = $_SESSION['redirect_after_login'];
-                        unset($_SESSION['redirect_after_login']); // Clean up session
+                        unset($_SESSION['redirect_after_login']);
                         header('Location: ' . $redirect_url);
                     } else {
-                        header('Location: ?action=dashboard'); // Default redirect
+                        header('Location: ?action=dashboard');
                     }
                     exit;
                 } else {

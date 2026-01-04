@@ -6,7 +6,7 @@ DROP TABLE IF EXISTS `users`;
 DROP TABLE IF EXISTS `transactions`;
 SET FOREIGN_KEY_CHECKS = 1;
 
--- 1. Users
+-- Users
 CREATE TABLE `users` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(100) NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE `users` (
     UNIQUE KEY `uniq_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 2. Categories
+-- Categories
 CREATE TABLE `categories` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `name` VARCHAR(50) NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE `categories` (
     UNIQUE KEY (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 3. Ads
+-- Ads
 CREATE TABLE `ads` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `title` VARCHAR(30) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE `ads` (
     INDEX (`buyer_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 4. Photos
+-- Photos
 CREATE TABLE `photos` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `ad_id` INT UNSIGNED NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE `photos` (
     INDEX (`ad_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 5. Transactions
+-- Transactions
 CREATE TABLE `transactions` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
     `ad_id` INT UNSIGNED DEFAULT NULL,

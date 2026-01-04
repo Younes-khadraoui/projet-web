@@ -1,8 +1,7 @@
 <?php
 /**
  * Require user to be logged in
- * Redirects to login page if not authenticated
- * @param string $redirect Optional: page to redirect to after login (e.g., "?action=create_ad")
+ * @param string 
  */
 function requireLogin() {
     if (!isset($_SESSION['user_id'])) {
@@ -15,7 +14,6 @@ function requireLogin() {
 
 /**
  * Require user to be an admin
- * Redirects to home page if not admin
  */
 function requireAdmin() {
     if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
